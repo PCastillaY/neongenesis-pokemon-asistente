@@ -1,0 +1,107 @@
+# NeoGénesis — arquitectura inicial
+
+## Objetivo
+
+NeoGénesis será una aplicación mobile-first para apoyar partidas de Pokémon Tabletop United NeoGénesis (PTU NG). El producto debe separar cuentas, campañas/salas, membresías, personajes, Pokémon, inventario, historial y conocimiento de reglas.
+
+Este primer bosquejo implementa únicamente la capa de experiencia y un modelo de datos de demostración. La persistencia real multiusuario todavía no está conectada.
+
+## Principios de dominio
+
+- Un **usuario** es una cuenta de la aplicación.
+- Un **miembro de campaña** representa la participación de un usuario en una sala y tiene un rol contextual: `GM` o `PLAYER`.
+- Un mismo usuario puede ser GM en una campaña y jugador en otra.
+- Un **personaje** pertenece a una participación/campaña, no directamente al usuario global.
+- Un **Pokémon capturado** es una instancia individual de una especie, por lo que especie y Pokémon del jugador son conceptos diferentes.
+- El inventario debe evolucionar hacia un libro mayor de eventos para conservar el historial de adquisiciones, usos y modificaciones.
+- Los cambios administrativos importantes deben registrar quién los realizó, cuándo y por qué.
+- La base de datos será la fuente de verdad; el asistente no debe inventar el estado del personaje.
+
+## Reglas PTU NG consideradas en el prototipo
+
+El modelo contempla los elementos que aparecen como piezas relevantes de un Entrenador: Atributos, Rasgos, Talentos, Clases, Nivel/Stats, Habilidades, Movimientos y Capacidades.
+
+También contempla PA, Pokémon, inventario, dinero e historial. El documento de reglas indica que un Entrenador puede tener hasta cuatro Clases y que los Pokémon pueden tener hasta seis Movimientos. La interfaz no intenta automatizar todavía la totalidad de los requisitos de adquisición ni las fórmulas de progresión.
+
+La progresión deberá parametrizarse por campaña porque PTU NG define progresión Estándar, Acelerada y Lenta.
+
+## Arquitectura objetivo
+
+```text
+Next.js App Router
+        |
+        +-- UI mobile-first
+        |
+        +-- Server Actions / Route Handlers
+        |
+        +-- autorización por campaña
+        |
+        +-- PostgreSQL
+        |      +-- users
+        |      +-- campaigns
+        |      +-- campaign_members
+        |      +-- characters
+        |      +-- character_attributes
+        |      +-- character_features
+        |      +-- pokemon_species
+        |      +-- captured_pokemon
+        |      +-- items
+        |      +-- inventory_entries
+        |      +-- inventory_events
+        |      +-- campaign_events
+        |      +-- sessions
+        |
+        +-- knowledge base / reglas
+        |
+        +-- proveedor LLM
+```
+
+## Autorización
+
+La autorización debe comprobarse en servidor. Ocultar botones en React no es suficiente.
+
+Ejemplo conceptual:
+
+```text
+request
+  -> authenticated user
+  -> campaign membership
+  -> campaign role
+  -> permission for requested operation
+  -> transaction + audit event
+```
+
+## Asistente
+
+El asistente tendrá tres fuentes principales de contexto:
+
+1. **Reglas:** recuperación de fragmentos del manual/base de conocimiento.
+2. **Campaña:** sesión, eventos y decisiones del GM.
+3. **Personaje:** atributos, clases, rasgos, talentos, Pokémon, objetos y recursos actuales.
+
+Preguntas sobre datos estructurados deben consultar primero la base de datos. Preguntas sobre reglas deben consultar el conocimiento de reglas. El LLM se utiliza para interpretar y presentar la respuesta, no como fuente de verdad.
+
+## UX inicial
+
+La navegación principal está diseñada para teléfono:
+
+- Inicio
+- Ficha
+- Equipo Pokémon
+- Objetos
+- Asistente
+
+Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista administrativa de jugadores. El prototipo incluye un selector de modo para visualizar esta experiencia sin crear todavía autenticación real.
+
+## Próximas fases
+
+1. Autenticación.
+2. PostgreSQL y migraciones.
+3. Campañas e invitaciones.
+4. Ficha completa y validadores PTU NG.
+5. Pokémon y Pokédex estructurada.
+6. Inventario con ledger de eventos.
+7. Herramientas de GM.
+8. Base de conocimiento de reglas.
+9. Asistente contextual con herramientas de lectura/escritura controladas.
+10. Pruebas de reglas y autorización.
