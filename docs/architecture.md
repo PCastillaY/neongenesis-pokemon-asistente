@@ -25,6 +25,25 @@ También contempla PA, Pokémon, inventario, dinero e historial. El documento de
 
 La progresión deberá parametrizarse por campaña porque PTU NG define progresión Estándar, Acelerada y Lenta.
 
+## Modelo de salas
+
+Una **sala** es la representación de una campaña completa. Es el contexto principal de navegación: primero se selecciona la sala y después se accede a sus personajes, Pokémon, inventarios, sesiones y herramientas de DJ.
+
+```text
+Usuario
+  └── Salas / campañas
+       ├── Miembros (PLAYER / GM)
+       ├── Personajes
+       │    ├── Pokémon capturados
+       │    └── Inventario
+       ├── Sesiones
+       │    ├── Resumen
+       │    └── Notas
+       └── herramientas de DJ / asistente
+```
+
+Una cuenta puede pertenecer a varias salas y tener un rol distinto en cada una. Las sesiones son subespacios de anotación dentro de la sala, no campañas independientes.
+
 ## Arquitectura objetivo
 
 ```text
@@ -95,13 +114,14 @@ Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista 
 
 ## Próximas fases
 
-1. Autenticación.
-2. PostgreSQL y migraciones.
-3. Campañas e invitaciones.
+1. Autenticación y selección real de salas.
+
+2. PostgreSQL, RLS y migraciones.
+3. Campañas, invitaciones y miembros.
 4. Ficha completa y validadores PTU NG.
 5. Pokémon y Pokédex estructurada.
 6. Inventario con ledger de eventos.
-7. Herramientas de GM.
+7. Sesiones, notas y herramientas de GM.
 8. Base de conocimiento de reglas.
 9. Asistente contextual con herramientas de lectura/escritura controladas.
 10. Pruebas de reglas y autorización.
