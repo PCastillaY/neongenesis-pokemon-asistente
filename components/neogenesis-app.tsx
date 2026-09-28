@@ -19,7 +19,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { demoCampaign } from '@/lib/neogenesis/mock-data'
-import type { Character, CampaignMember, Pokemon } from '@/lib/neogenesis/types'
+import type { CampaignSession, Character, CampaignMember, Pokemon } from '@/lib/neogenesis/types'
 
 const tabs = [
   { id: 'home', label: 'Inicio', icon: Home },
@@ -142,7 +142,61 @@ function AssistantTab({ character }: { character: Character }) {
   return <div className="space-y-4"><section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5"><div className="flex items-center gap-3"><div className="rounded-2xl bg-cyan-300/10 p-3"><Bot className="size-5 text-cyan-200" /></div><div><p className="font-bold">Asistente NeoGénesis</p><p className="text-xs text-white/45">Contexto: {character.name} · {character.pokemon.length} Pokémon</p></div></div><p className="mt-5 text-sm leading-6 text-white/65">Este prototipo reserva el asistente para responder con contexto de reglas, campaña y personaje. En la siguiente fase se conectará a la base de conocimiento y a la API de IA.</p></section><div className="space-y-2">{suggestions.map((item) => <button key={item} className="w-full rounded-2xl border border-white/10 bg-white/[0.035] p-3 text-left text-sm text-white/65">{item}</button>)}</div><div className="flex gap-2 rounded-2xl border border-white/10 bg-black/15 p-3"><input className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/25" placeholder="Pregunta sobre PTU NG..." /><button className="rounded-xl bg-cyan-200 px-3 py-2 text-xs font-bold text-slate-950">Enviar</button></div></div>
 }
 
+
+function RoomPicker({ campaigns, onSelect }: { campaigns: { id: string; name: string; description: string; sessionNumber: number; members: CampaignMember[] }[]; onSelect: (id: string) => void }) {
+  return <main className="min-h-dvh bg-[#071018] text-white selection:bg-cyan-200 selection:text-slate-950">
+    <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_38%,#050a0f_100%)]">
+      <div className="px-5 pb-12 pt-10">
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-200/70">NeoGénesis</p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight">Tus salas</h1>
+        <p className="mt-2 text-sm leading-6 text-white/50">Elige la campaña en la que vas a jugar. Cada sala contiene sus personajes, Pokémon, inventario y sesiones.</p>
+        <div className="mt-8 space-y-3">
+          {campaigns.map((campaign) => <button key={campaign.id} onClick={() => onSelect(campaign.id)} className="w-full rounded-3xl border border-white/10 bg-white/[0.045] p-5 text-left transition hover:border-cyan-300/30 hover:bg-white/[0.07]">
+            <div className="flex items-start justify-between gap-4">
+              <div><p className="text-xl font-bold">{campaign.name}</p><p className="mt-1 text-sm text-white/45">{campaign.description}</p></div>
+              <ChevronRight className="mt-1 size-5 shrink-0 text-white/30" />
+            </div>
+            <div className="mt-5 flex gap-2 text-[10px] uppercase tracking-wider text-white/40">
+              <span className="rounded-full bg-cyan-300/10 px-2.5 py-1 text-cyan-200/80">Sesión {campaign.sessionNumber}</span>
+              <span className="rounded-full bg-white/5 px-2.5 py-1">{campaign.members.filter((m) => m.role === 'PLAYER').length} jugadores</span>
+            </div>
+          </button>)}
+          <button className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-white/15 py-5 text-sm text-white/45"><Plus className="size-4" /> Crear o unirse a una sala</button>
+        </div>
+      </div>
+    </div>
+  </main>
+}
+
+function SessionNotes({ sessions, onSelect }: { sessions: CampaignSession[]; onSelect: (session: CampaignSession) => void }) {
+  return <section>
+    <SectionTitle icon={History}>Sesiones de la campaña</SectionTitle>
+    <div className="space-y-2">{sessions.map((session) => <button key={session.id} onClick={() => onSelect(session)} className="w-full rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-left transition hover:bg-white/[0.07]">
+      <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">Sesión {session.sessionNumber} · {session.title}</p><p className="mt-1 text-xs text-white/40">{session.playedAt ?? 'Sin fecha'}</p></div><ChevronRight className="size-4 text-white/25" /></div>
+      <p className="mt-3 text-xs leading-5 text-white/50">{session.summary}</p>
+    </button>)}</div>
+  </section>
+}
+
+function SessionDetail({ session, onBack }: { session: CampaignSession; onBack: () => void }) {
+  return <div className="space-y-4">
+    <button onClick={onBack} className="text-xs text-cyan-200">← Volver a sesiones</button>
+    <section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-200/70">Sesión {session.sessionNumber}</p>
+      <h2 className="mt-1 text-2xl font-black">{session.title}</h2>
+      <p className="mt-1 text-xs text-white/40">{session.playedAt ?? 'Sin fecha'}</p>
+      <p className="mt-5 text-sm leading-6 text-white/65">{session.summary}</p>
+    </section>
+    <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+      <div className="flex items-center justify-between"><SectionTitle icon={History}>Notas</SectionTitle><span className="text-[10px] uppercase text-white/30">Sala</span></div>
+      <p className="whitespace-pre-line text-sm leading-7 text-white/60">{session.notes || 'No hay notas todavía.'}</p>
+    </section>
+  </div>
+}
+
 export default function NeoGenesisApp() {
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [selectedSession, setSelectedSession] = useState<CampaignSession | null>(null)
   const [tab, setTab] = useState<TabId>('home')
   const [isGM, setIsGM] = useState(false)
   const [character, setCharacter] = useState<Character>(demoCampaign.members[1].character!)
@@ -159,7 +213,11 @@ export default function NeoGenesisApp() {
     window.localStorage.setItem('neogenesis-demo-character', JSON.stringify(character))
   }, [character])
 
+  const currentCampaign = demoCampaign.id === selectedCampaignId ? demoCampaign : null
   const currentTitle = useMemo(() => tabs.find((item) => item.id === tab)?.label ?? 'Inicio', [tab])
+
+  if (!currentCampaign) return <RoomPicker campaigns={[demoCampaign]} onSelect={setSelectedCampaignId} />
+  if (selectedSession) return <main className="min-h-dvh bg-[#071018] text-white"><div className="mx-auto min-h-dvh w-full max-w-md px-4 pb-10 pt-6"><SessionDetail session={selectedSession} onBack={() => setSelectedSession(null)} /></div></main>
 
   const renderTab = () => {
     if (selectedMember?.character) return <div className="space-y-4"><button onClick={() => setSelectedMember(null)} className="text-xs text-cyan-200">← Volver a jugadores</button><CharacterTab character={selectedMember.character} /><HistoryTab character={selectedMember.character} /></div>
@@ -168,15 +226,15 @@ export default function NeoGenesisApp() {
       case 'pokemon': return <PokemonTab character={character} />
       case 'inventory': return <><InventoryTab character={character} /><HistoryTab character={character} /></>
       case 'assistant': return <AssistantTab character={character} />
-      default: return <HomeTab character={character} isGM={isGM} members={demoCampaign.members} onSelectMember={setSelectedMember} />
+      default: return <div className="space-y-6"><HomeTab character={character} isGM={isGM} members={currentCampaign.members} onSelectMember={setSelectedMember} /><SessionNotes sessions={currentCampaign.sessions} onSelect={setSelectedSession} /></div>
     }
   }
 
   return <main className="min-h-dvh bg-[#071018] text-white selection:bg-cyan-200 selection:text-slate-950">
     <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_38%,#050a0f_100%)]">
       <header className="sticky top-0 z-20 border-b border-white/8 bg-[#071018]/90 px-4 py-3 backdrop-blur-xl">
-        <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200/70">NeoGénesis</p><p className="text-sm font-semibold">{demoCampaign.name}</p></div><button onClick={() => setIsGM((value) => !value)} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-[10px] text-white/65">{isGM ? <Crown className="size-3 text-amber-300" /> : <UserRound className="size-3" />}{isGM ? 'Modo DJ' : 'Jugador'}</button></div>
-        <div className="mt-2 flex items-center justify-between text-[10px] text-white/35"><span>Sesión {demoCampaign.sessionNumber}</span><span>{currentTitle}</span></div>
+        <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200/70">NeoGénesis</p><p className="text-sm font-semibold">{currentCampaign.name}</p></div><button onClick={() => setIsGM((value) => !value)} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-[10px] text-white/65">{isGM ? <Crown className="size-3 text-amber-300" /> : <UserRound className="size-3" />}{isGM ? 'Modo DJ' : 'Jugador'}</button></div>
+        <div className="mt-2 flex items-center justify-between text-[10px] text-white/35"><button onClick={() => { setSelectedCampaignId(null); setSelectedSession(null) }} className="text-cyan-200/70">Cambiar sala</button><span>Sesión {currentCampaign.sessionNumber}</span><span>{currentTitle}</span></div>
       </header>
 
       <div className="px-4 pb-28 pt-5">{renderTab()}</div>
