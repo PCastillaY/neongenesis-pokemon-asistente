@@ -125,3 +125,22 @@ Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista 
 8. Base de conocimiento de reglas.
 9. Asistente contextual con herramientas de lectura/escritura controladas.
 10. Pruebas de reglas y autorización.
+
+## Persistencia mínima obligatoria
+
+La base de datos debe conservar, como mínimo, el estado necesario para reconstruir una partida desde cualquier dispositivo:
+
+- Cuenta y perfil básico.
+- Sala/campaña, propietario, configuración de progresión y miembros/roles.
+- Personaje: identidad, nivel/experiencia, recursos, stats, atributos, clases y elementos de progresión (rasgos, talentos, habilidades y capacidades), además de notas e imagen.
+- Pokémon capturados: especie, identidad individual, nivel, PS, movimientos, habilidad, naturaleza, objeto equipado, estado, notas e imagen.
+- Catálogo de especies y sus datos de reglas.
+- Inventario actual y un ledger de cambios para poder reconstruir cómo se obtuvo/usó/modificó cada objeto.
+- Sesiones: número, fecha, título, resumen y notas.
+- Notas individuales de sesión, incluyendo notas privadas del GM.
+- Eventos relevantes de campaña con actor, fecha, entidad afectada y payload de datos.
+- Invitaciones de sala y su estado de uso.
+
+Los datos derivados (por ejemplo, contadores de Pokémon, cantidades agregadas o una vista de historial) deben poder reconstruirse desde estas entidades; no deben ser la única fuente de verdad.
+
+Las imágenes se almacenarán físicamente en Supabase Storage o un proveedor equivalente y la base de datos conservará únicamente su referencia (URL o ruta).
