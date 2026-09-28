@@ -8,6 +8,21 @@ type DbCampaign = {
   progression_mode: 'STANDARD' | 'ACCELERATED' | 'SLOW'
   invite_code: string | null
   image_url: string | null
+  status: 'PENDING' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'REJECTED'
+}
+
+export type CampaignCreationRequest = {
+  id: string
+  requested_by: string
+  name: string
+  description: string
+  progression_mode: 'STANDARD' | 'ACCELERATED' | 'SLOW'
+  image_url: string | null
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_notes: string
+  created_at: string
 }
 
 type DbMember = {
@@ -109,7 +124,7 @@ async function loadCharacterData(character: DbCharacter) {
 export async function loadCampaigns() {
   const { data: memberRows, error: memberError } = await supabase
     .from('campaign_members')
-    .select('campaign_id,user_id,role,display_name,campaign:campaigns(id,name,description,progression_mode,invite_code,image_url)')
+    .select('campaign_id,user_id,role,display_name,campaign:campaigns(id,name,description,progression_mode,invite_code,image_url,status)')
   if (memberError) throw memberError
 
   const rows = (memberRows ?? []) as any[]
@@ -124,6 +139,7 @@ export async function loadCampaigns() {
       progressionMode: campaign.progression_mode,
       inviteCode: campaign.invite_code ?? undefined,
       imageUrl: campaign.image_url ?? undefined,
+      status: campaign.status,
       members: [],
       sessions: [],
       sessionNumber: 0,
@@ -135,7 +151,7 @@ export async function loadCampaigns() {
 
 export async function loadCampaign(campaignId: string, userId: string): Promise<Campaign> {
   const [{ data: campaignRow, error: campaignError }, { data: memberRows, error: memberError }, { data: characterRows, error: characterError }, { data: sessionRows, error: sessionError }] = await Promise.all([
-    supabase.from('campaigns').select('id,name,description,progression_mode,invite_code,image_url').eq('id', campaignId).single(),
+    supabase.from('campaigns').select('id,name,description,progression_mode,invite_code,image_url,status').eq('id', campaignId).single(),
     supabase.from('campaign_members').select('campaign_id,user_id,role,display_name').eq('campaign_id', campaignId).order('joined_at'),
     supabase.from('characters').select('id,campaign_id,user_id,name,concept,level,hp,max_hp,action_points,max_action_points,money,classes,attributes,stats').eq('campaign_id', campaignId),
     supabase.from('campaign_sessions').select('id,session_number,title,played_at,summary,notes').eq('campaign_id', campaignId).order('session_number', { ascending: false }),
@@ -176,6 +192,7 @@ export async function loadCampaign(campaignId: string, userId: string): Promise<
     progressionMode: campaignRow.progression_mode,
     inviteCode: campaignRow.invite_code ?? undefined,
     imageUrl: campaignRow.image_url ?? undefined,
+    status: campaignRow.status,
     members,
     sessions,
     sessionNumber: sessions[0]?.sessionNumber ?? 0,
@@ -186,12 +203,86 @@ export async function createCampaign(name: string, description: string, userId: 
   const code = crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()
   const { data, error } = await supabase
     .from('campaigns')
-    .insert({ name, description, created_by: userId, invite_code: code })
+    .insert({ name, description, created_by: userId, invite_code: code, status: 'ACTIVE' })
     .select('id,name')
     .single()
   if (error) throw error
-
   return data.id
+}
+
+export async function submitCampaignCreationRequest(
+  name: string,
+  description: string,
+  progressionMode: 'STANDARD' | 'ACCELERATED' | 'SLOW' = 'STANDARD',
+) {
+  const { data, error } = await supabase.rpc('submit_campaign_creation_request', {
+    request_name: name.trim(),
+    request_description: description.trim(),
+    request_progression_mode: progressionMode,
+    request_image_url: null,
+  })
+  if (error) throw error
+  return data as string
+}
+
+export async function loadCampaignCreationRequests() {
+  const { data, error } = await supabase
+    .from('campaign_creation_requests')
+    .select('id,requested_by,name,description,progression_mode,image_url,status,reviewed_by,reviewed_at,review_notes,created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as CampaignCreationRequest[]
+}
+
+export async function loadAdminCampaigns(): Promise<Campaign[]> {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .select('id,name,description,progression_mode,invite_code,image_url,status,created_by')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as Array<DbCampaign & { created_by: string }>).map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    progressionMode: row.progression_mode,
+    inviteCode: row.invite_code ?? undefined,
+    imageUrl: row.image_url ?? undefined,
+    status: row.status,
+    members: [],
+    sessions: [],
+    sessionNumber: 0,
+  }))
+}
+
+export async function approveCampaignCreationRequest(requestId: string, notes = '') {
+  const { data, error } = await supabase.rpc('approve_campaign_creation_request', {
+    request_id_input: requestId,
+    review_notes_input: notes,
+  })
+  if (error) throw error
+  return data as { request_id: string; campaign_id: string; status: 'APPROVED' }
+}
+
+export async function rejectCampaignCreationRequest(requestId: string, notes = '') {
+  const { data, error } = await supabase.rpc('reject_campaign_creation_request', {
+    request_id_input: requestId,
+    review_notes_input: notes,
+  })
+  if (error) throw error
+  return data as { request_id: string; status: 'REJECTED' }
+}
+
+export async function updateCampaignStatus(
+  campaignId: string,
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED',
+) {
+  const { error } = await supabase.from('campaigns').update({ status }).eq('id', campaignId)
+  if (error) throw error
+}
+
+export async function deleteCampaign(campaignId: string) {
+  const { error } = await supabase.from('campaigns').delete().eq('id', campaignId)
+  if (error) throw error
 }
 
 export async function createCharacter(campaignId: string, userId: string, name: string, concept: string) {
