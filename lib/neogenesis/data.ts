@@ -248,6 +248,20 @@ export async function loadCampaignCreationRequests() {
   return rows.map((row) => ({ ...row, requester_display_name: names.get(row.requested_by) ?? null }))
 }
 
+export type PlatformUser = { id: string; email: string | null; display_name: string | null; platform_role: string; email_confirmed: boolean }
+
+export async function searchPlatformUsers(query = ''): Promise<PlatformUser[]> {
+  const { data, error } = await supabase.rpc('search_platform_users', { search_query: query.trim() })
+  if (error) throw error
+  return (data ?? []) as PlatformUser[]
+}
+
+export async function setPlatformAdmin(userId: string, makeAdmin: boolean) {
+  const { data, error } = await supabase.rpc('set_platform_admin', { target_user_id: userId, make_admin: makeAdmin })
+  if (error) throw error
+  return data as boolean
+}
+
 export async function loadAdminCampaignCreationRequests() {
   return loadCampaignCreationRequests()
 }
