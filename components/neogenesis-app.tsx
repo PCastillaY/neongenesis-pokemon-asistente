@@ -2,25 +2,47 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Archive,
   Backpack,
   Bot,
+  Check,
+
   ChevronRight,
   Copy,
   Crown,
   History,
   Home,
+  Settings,
+
   LogOut,
   Plus,
   Share2,
   Shield,
   Sparkles,
+  Trash2,
   UserRound,
+
   Users,
   Zap,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { createCampaign, createCharacter, joinCampaign, loadCampaign, loadCampaigns } from '@/lib/neogenesis/data'
+import {
+  approveCampaignCreationRequest,
+  createCampaign,
+  createCharacter,
+  deleteCampaign,
+  joinCampaign,
+  loadAdminCampaignCreationRequests,
+  loadAdminCampaigns,
+  loadCampaign,
+  loadCampaigns,
+  loadCampaignCreationRequests,
+  rejectCampaignCreationRequest,
+  submitCampaignCreationRequest,
+  updateCampaignStatus,
+} from '@/lib/neogenesis/data'
 import type { Campaign, CampaignMember, CampaignSession, Character, Pokemon } from '@/lib/neogenesis/types'
+import type { CampaignCreationRequest } from '@/lib/neogenesis/data'
 
 const tabs = [
   { id: 'home', label: 'Inicio', icon: Home },
@@ -102,25 +124,29 @@ function AuthScreen() {
   </main>
 }
 
-function RoomPicker({ campaigns, onSelect, onCreate, onJoin, onSignOut }: {
+function RoomPicker({ campaigns, onSelect, onRequest, onJoin, onSignOut, creationRequests, isAdmin, onAdmin }: {
   campaigns: Campaign[]
   onSelect: (id: string) => void
-  onCreate: (name: string, description: string) => Promise<void>
+  onRequest: (name: string, description: string, progressionMode: 'STANDARD' | 'ACCELERATED' | 'SLOW') => Promise<void>
   onJoin: (code: string) => Promise<void>
   onSignOut: () => Promise<void>
+  creationRequests: CampaignCreationRequest[]
+  isAdmin: boolean
+  onAdmin: () => void
 }) {
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [progressionMode, setProgressionMode] = useState<'STANDARD' | 'ACCELERATED' | 'SLOW'>('STANDARD')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
 
-  async function create() {
+  async function requestCreation() {
     setBusy(true); setMessage('')
-    try { await onCreate(name, description); setName(''); setDescription(''); setShowCreate(false) }
-    catch (e: any) { setMessage(e.message || 'No se pudo crear la sala.') }
+    try { await onRequest(name, description, progressionMode); setName(''); setDescription(''); setShowCreate(false) }
+    catch (e: any) { setMessage(e.message || 'No se pudo enviar la solicitud.') }
     finally { setBusy(false) }
   }
 
@@ -136,7 +162,7 @@ function RoomPicker({ campaigns, onSelect, onCreate, onJoin, onSignOut }: {
       <div className="px-5 pb-12 pt-10">
         <div className="flex items-start justify-between gap-4">
           <div><p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-200/70">NeoGénesis</p><h1 className="mt-2 text-4xl font-black tracking-tight">Tus salas</h1></div>
-          <button onClick={onSignOut} className="rounded-xl border border-white/10 p-2 text-white/45" title="Cerrar sesión"><LogOut className="size-4" /></button>
+          <div className="flex gap-2">{isAdmin && <button onClick={onAdmin} className="rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-2 text-cyan-200" title="Administración"><Settings className="size-4" /></button>}<button onClick={onSignOut} className="rounded-xl border border-white/10 p-2 text-white/45" title="Cerrar sesión"><LogOut className="size-4" /></button></div>
         </div>
         <p className="mt-2 text-sm leading-6 text-white/50">Cada sala es una campaña completa con personajes, Pokémon, inventario y sesiones.</p>
 
@@ -146,17 +172,19 @@ function RoomPicker({ campaigns, onSelect, onCreate, onJoin, onSignOut }: {
             <div className="mt-5 flex gap-2 text-[10px] uppercase tracking-wider text-white/40"><span className="rounded-full bg-cyan-300/10 px-2.5 py-1 text-cyan-200/80">{campaign.progressionMode || 'STANDARD'}</span></div>
           </button>)}
           {campaigns.length === 0 && <div className="rounded-3xl border border-dashed border-white/10 p-6 text-center text-sm text-white/40">Todavía no perteneces a ninguna sala.</div>}
+          {creationRequests.some((request) => request.status === 'PENDING') && <div className="rounded-2xl border border-amber-300/15 bg-amber-300/5 p-4 text-xs leading-5 text-amber-100/75">Tienes una solicitud de creación de sala pendiente de revisión.</div>}
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <button onClick={() => { setShowCreate(!showCreate); setShowJoin(false); setMessage('') }} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm"><Plus className="size-4" /> Crear sala</button>
+          <button onClick={() => { setShowCreate(!showCreate); setShowJoin(false); setMessage('') }} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm"><Plus className="size-4" /> Solicitar sala</button>
           <button onClick={() => { setShowJoin(!showJoin); setShowCreate(false); setMessage('') }} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm"><Share2 className="size-4" /> Unirse</button>
         </div>
 
         {showCreate && <div className="mt-4 space-y-3 rounded-3xl border border-cyan-300/10 bg-cyan-300/5 p-4">
           <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-white/10 bg-black/15 px-3 py-3 text-sm outline-none" placeholder="Nombre de la campaña" />
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-24 w-full rounded-xl border border-white/10 bg-black/15 px-3 py-3 text-sm outline-none" placeholder="Descripción opcional" />
-          <button disabled={!name.trim() || busy} onClick={create} className="w-full rounded-xl bg-cyan-200 px-3 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Creando…' : 'Crear y entrar'}</button>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-24 w-full rounded-xl border border-white/10 bg-black/15 px-3 py-3 text-sm outline-none" placeholder="Descripción para el administrador" />
+          <select value={progressionMode} onChange={(e) => setProgressionMode(e.target.value as typeof progressionMode)} className="w-full rounded-xl border border-white/10 bg-[#071018] px-3 py-3 text-sm outline-none"><option value="STANDARD">Progresión estándar</option><option value="ACCELERATED">Progresión acelerada</option><option value="SLOW">Progresión lenta</option></select>
+          <button disabled={!name.trim() || busy} onClick={requestCreation} className="w-full rounded-xl bg-cyan-200 px-3 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Enviando…' : 'Enviar solicitud'}</button>
         </div>}
 
         {showJoin && <div className="mt-4 space-y-3 rounded-3xl border border-cyan-300/10 bg-cyan-300/5 p-4">
@@ -230,6 +258,59 @@ function AssistantTab({ character }: { character?: Character }) {
   return <div className="space-y-4"><section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5"><div className="flex items-center gap-3"><div className="rounded-2xl bg-cyan-300/10 p-3"><Bot className="size-5 text-cyan-200" /></div><div><p className="font-bold">Asistente NeoGénesis</p><p className="text-xs text-white/45">Contexto: {character?.name || 'sin personaje'} · {character?.pokemon.length || 0} Pokémon</p></div></div><p className="mt-5 text-sm leading-6 text-white/65">El estado estructurado ya proviene de Supabase. La capa de reglas y LLM se conectará sobre estas entidades, sin volver al estado de demostración.</p></section></div>
 }
 
+function AdminPanel({ requests, campaigns, onBack, onRefresh, onApprove, onReject, onStatus, onDelete, onCreate }: {
+  requests: CampaignCreationRequest[]
+  campaigns: Campaign[]
+  onBack: () => void
+  onRefresh: () => Promise<void>
+  onApprove: (id: string) => Promise<void>
+  onReject: (id: string) => Promise<void>
+  onStatus: (id: string, status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED') => Promise<void>
+  onDelete: (id: string) => Promise<void>
+  onCreate: (name: string, description: string) => Promise<void>
+}) {
+  const [section, setSection] = useState<'requests' | 'campaigns'>('requests')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+
+  async function create() {
+    setBusy(true); setMessage('')
+    try { await onCreate(name.trim(), description.trim()); setName(''); setDescription('') }
+    catch (e: any) { setMessage(e.message || 'No se pudo crear la campaña.') }
+    finally { setBusy(false) }
+  }
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true); setMessage('')
+    try { await action(); await onRefresh() }
+    catch (e: any) { setMessage(e.message || 'No se pudo completar la operación.') }
+    finally { setBusy(false) }
+  }
+
+  return <main className="min-h-dvh bg-[#071018] text-white">
+    <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_38%,#050a0f_100%)] px-4 pb-10 pt-6">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200/70">NeoGénesis</p><h1 className="mt-1 text-3xl font-black">Administración</h1></div>
+        <button onClick={onBack} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60">Volver</button>
+      </div>
+      <div className="mt-6 grid grid-cols-2 gap-2"><button onClick={() => setSection('requests')} className={'rounded-xl px-3 py-3 text-xs ' + (section === 'requests' ? 'bg-cyan-300/10 text-cyan-200' : 'bg-white/[0.04] text-white/45')}>Solicitudes {requests.filter(r => r.status === 'PENDING').length ? '(' + requests.filter(r => r.status === 'PENDING').length + ')' : ''}</button><button onClick={() => setSection('campaigns')} className={'rounded-xl px-3 py-3 text-xs ' + (section === 'campaigns' ? 'bg-cyan-300/10 text-cyan-200' : 'bg-white/[0.04] text-white/45')}>Salas ({campaigns.length})</button></div>
+      {message && <p className="mt-4 rounded-xl border border-rose-300/15 bg-rose-300/5 p-3 text-xs text-rose-100">{message}</p>}
+      {section === 'requests' ? <div className="mt-5 space-y-3">{requests.length ? requests.map((request) => <article key={request.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+        <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{request.name}</p><p className="mt-1 text-xs text-white/40">Solicitante: {request.requested_by.slice(0, 8)}…</p></div><span className="rounded-full bg-white/5 px-2 py-1 text-[10px] uppercase text-white/45">{request.status}</span></div>
+        <p className="mt-3 text-sm leading-6 text-white/55">{request.description || 'Sin descripción.'}</p>
+        <p className="mt-2 text-[10px] uppercase tracking-wider text-white/30">Progresión: {request.progression_mode}</p>
+        {request.status === 'PENDING' && <div className="mt-4 grid grid-cols-2 gap-2"><button disabled={busy} onClick={() => run(() => onApprove(request.id))} className="flex items-center justify-center gap-2 rounded-xl bg-cyan-200 px-3 py-2 text-xs font-bold text-slate-950"><Check className="size-3" /> Aprobar</button><button disabled={busy} onClick={() => run(() => onReject(request.id))} className="flex items-center justify-center gap-2 rounded-xl border border-rose-300/15 bg-rose-300/5 px-3 py-2 text-xs text-rose-100"><X className="size-3" /> Rechazar</button></div>}
+      </article>) : <p className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/40">No hay solicitudes.</p>}</div>
+      : <div className="mt-5 space-y-3">
+        <section className="rounded-2xl border border-cyan-300/10 bg-cyan-300/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-cyan-200">Crear sala directamente</p><p className="mt-1 text-xs leading-5 text-white/45">Solo disponible para administración de plataforma.</p><div className="mt-3 space-y-2"><input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" className="w-full rounded-xl border border-white/10 bg-black/15 px-3 py-2.5 text-sm outline-none" /><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripción" className="min-h-20 w-full rounded-xl border border-white/10 bg-black/15 px-3 py-2.5 text-sm outline-none" /><button disabled={!name.trim() || busy} onClick={create} className="w-full rounded-xl bg-cyan-200 px-3 py-2.5 text-xs font-bold text-slate-950 disabled:opacity-40">Crear sala</button></div></section>
+        {campaigns.map(campaign => <article key={campaign.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{campaign.name}</p><p className="text-xs text-white/40">{campaign.status || 'ACTIVE'}</p></div><span className="text-[10px] text-white/30">{campaign.id.slice(0, 8)}…</span></div><div className="mt-3 flex gap-2">{campaign.status === 'ARCHIVED' ? <button onClick={() => run(() => onStatus(campaign.id, 'ACTIVE'))} className="rounded-xl bg-cyan-300/10 px-3 py-2 text-xs text-cyan-200">Reactivar</button> : <button onClick={() => run(() => onStatus(campaign.id, 'ARCHIVED'))} className="flex items-center gap-1 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/60"><Archive className="size-3" /> Archivar</button>}<button onClick={() => { if (window.confirm('Esta acción eliminará permanentemente la sala y sus datos. ¿Continuar?')) run(() => onDelete(campaign.id)) }} className="flex items-center gap-1 rounded-xl bg-rose-300/5 px-3 py-2 text-xs text-rose-100"><Trash2 className="size-3" /> Borrar</button></div></article>)}
+      </div>}
+    </div>
+  </main>
+}
+
 function SessionDetail({ session, onBack }: { session: CampaignSession; onBack: () => void }) {
   return <div className="space-y-4"><button onClick={onBack} className="text-xs text-cyan-200">← Volver a sesiones</button><section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5"><p className="text-[10px] uppercase tracking-[0.2em] text-cyan-200/70">Sesión {session.sessionNumber}</p><h2 className="mt-1 text-2xl font-black">{session.title}</h2><p className="mt-1 text-xs text-white/40">{session.playedAt ?? 'Sin fecha'}</p><p className="mt-5 text-sm leading-6 text-white/65">{session.summary || 'Sin resumen.'}</p></section><section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Notas</p><p className="mt-3 whitespace-pre-line text-sm leading-7 text-white/60">{session.notes || 'No hay notas todavía.'}</p></section></div>
 }
@@ -245,10 +326,25 @@ export default function NeoGenesisApp() {
   const [tab, setTab] = useState<TabId>('home')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [platformRole, setPlatformRole] = useState<'USER' | 'PLATFORM_ADMIN'>('USER')
+  const [creationRequests, setCreationRequests] = useState<CampaignCreationRequest[]>([])
+  const [adminCampaigns, setAdminCampaigns] = useState<Campaign[]>([])
+  const [adminOpen, setAdminOpen] = useState(false)
 
   const refreshCampaigns = useCallback(async () => {
     const rows = await loadCampaigns()
     setCampaigns(rows)
+  }, [])
+
+  const refreshCreationRequests = useCallback(async () => {
+    const rows = await loadCampaignCreationRequests()
+    setCreationRequests(rows)
+  }, [])
+
+  const refreshAdmin = useCallback(async () => {
+    const [requests, rooms] = await Promise.all([loadAdminCampaignCreationRequests(), loadAdminCampaigns()])
+    setCreationRequests(requests)
+    setAdminCampaigns(rooms)
   }, [])
 
   const refreshCampaign = useCallback(async (campaignId: string, userId: string) => {
@@ -279,9 +375,15 @@ export default function NeoGenesisApp() {
   }, [])
 
   useEffect(() => {
-    if (!user) { setCampaigns([]); setSelectedCampaignId(null); setCampaign(null); return }
-    refreshCampaigns().catch((e) => setError(e.message || 'No se pudieron cargar tus salas.'))
-  }, [user, refreshCampaigns])
+    if (!user) { setCampaigns([]); setCreationRequests([]); setAdminCampaigns([]); setPlatformRole('USER'); setSelectedCampaignId(null); setCampaign(null); return }
+    Promise.all([
+      refreshCampaigns(),
+      refreshCreationRequests(),
+      supabase.from('profiles').select('platform_role').eq('id', user.id).maybeSingle(),
+    ]).then(([, , profileResult]) => {
+      setPlatformRole(profileResult.data?.platform_role === 'PLATFORM_ADMIN' ? 'PLATFORM_ADMIN' : 'USER')
+    }).catch((e) => setError(e.message || 'No se pudieron cargar tus datos.'))
+  }, [user, refreshCampaigns, refreshCreationRequests])
 
   useEffect(() => {
     if (!user || !selectedCampaignId) return
@@ -289,25 +391,40 @@ export default function NeoGenesisApp() {
   }, [user, selectedCampaignId, refreshCampaign])
 
   useEffect(() => {
-    if (!user || !window.location.search) return
     const code = new URLSearchParams(window.location.search).get('invite')
+    if (code) window.localStorage.setItem('neogenesis_pending_invite', code.trim().toUpperCase())
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    const code = window.localStorage.getItem('neogenesis_pending_invite')
     if (!code) return
     joinCampaign(code).then((result) => {
+      window.localStorage.removeItem('neogenesis_pending_invite')
       window.history.replaceState({}, '', window.location.pathname)
       setSelectedCampaignId(result.campaign_id)
       refreshCampaigns().catch(() => {})
-    }).catch((e) => setError(e.message || 'La invitación no es válida.'))
+    }).catch((e) => setError(e.message || 'La invitación no es válida o ha expirado.'))
   }, [user, refreshCampaigns])
 
   const currentMember = useMemo(() => campaign?.members.find((member) => member.id === campaign.id + ':' + user?.id), [campaign, user])
   const character = currentMember?.character
   const currentTitle = useMemo(() => tabs.find((item) => item.id === tab)?.label ?? 'Inicio', [tab])
 
-  async function handleCreate(name: string, description: string) {
-    if (!user) return
-    const id = await createCampaign(name.trim(), description.trim(), user.id)
+  async function handleRequestCreation(name: string, description: string, progressionMode: 'STANDARD' | 'ACCELERATED' | 'SLOW') {
+    await submitCampaignCreationRequest(name, description, progressionMode)
+    await refreshCreationRequests()
+  }
+
+  async function handleAdminRefresh() {
+    await refreshAdmin()
     await refreshCampaigns()
-    setSelectedCampaignId(id)
+  }
+
+  async function handleAdminCreate(name: string, description: string) {
+    if (!user) return
+    await createCampaign(name, description, user.id)
+    await handleAdminRefresh()
   }
 
   async function handleJoin(code: string) {
@@ -325,9 +442,13 @@ export default function NeoGenesisApp() {
   if (authLoading) return <main className="min-h-dvh bg-[#071018] text-white grid place-items-center text-sm text-white/40">Cargando sesión…</main>
   if (!user) return <AuthScreen />
 
+  if (adminOpen && platformRole === 'PLATFORM_ADMIN') {
+    return <AdminPanel requests={creationRequests} campaigns={adminCampaigns} onBack={() => setAdminOpen(false)} onRefresh={handleAdminRefresh} onApprove={async (id) => { await approveCampaignCreationRequest(id); await handleAdminRefresh() }} onReject={async (id) => { await rejectCampaignCreationRequest(id); await handleAdminRefresh() }} onStatus={async (id, status) => { await updateCampaignStatus(id, status); await handleAdminRefresh() }} onDelete={async (id) => { await deleteCampaign(id); await handleAdminRefresh() }} onCreate={handleAdminCreate} />
+  }
+
   if (!campaign) {
     return <>
-      <RoomPicker campaigns={campaigns} onSelect={setSelectedCampaignId} onCreate={handleCreate} onJoin={handleJoin} onSignOut={() => supabase.auth.signOut()} />
+      <RoomPicker campaigns={campaigns} onSelect={setSelectedCampaignId} onRequest={handleRequestCreation} onJoin={handleJoin} onSignOut={() => supabase.auth.signOut()} creationRequests={creationRequests} isAdmin={platformRole === 'PLATFORM_ADMIN'} onAdmin={async () => { await refreshAdmin(); setAdminOpen(true) }} />
       {error && <div className="fixed inset-x-4 bottom-4 mx-auto max-w-md rounded-2xl border border-rose-300/15 bg-rose-300/10 p-3 text-xs text-rose-100">{error}</div>}
     </>
   }
