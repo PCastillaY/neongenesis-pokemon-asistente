@@ -23,6 +23,7 @@ export type CampaignCreationRequest = {
   reviewed_at: string | null
   review_notes: string
   created_at: string
+  requester_display_name?: string | null
 }
 
 type DbMember = {
