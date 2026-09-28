@@ -160,13 +160,6 @@ Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista 
 5. Base de conocimiento de reglas.
 6. Asistente contextual con herramientas de lectura/escritura controladas.
 7. Pruebas de reglas y autorización.
-4. Ficha completa y validadores PTU NG.
-5. Pokémon y Pokédex estructurada.
-6. Inventario con ledger de eventos.
-7. Sesiones, notas y herramientas de GM.
-8. Base de conocimiento de reglas.
-9. Asistente contextual con herramientas de lectura/escritura controladas.
-10. Pruebas de reglas y autorización.
 
 ## Persistencia mínima obligatoria
 
