@@ -86,6 +86,9 @@ export type Campaign = {
   id: string
   name: string
   description: string
+  progressionMode?: 'STANDARD' | 'ACCELERATED' | 'SLOW'
+  inviteCode?: string
+  imageUrl?: string
   members: CampaignMember[]
   sessions: CampaignSession[]
   sessionNumber: number
