@@ -232,7 +232,20 @@ export async function loadCampaignCreationRequests() {
     .select('id,requested_by,name,description,progression_mode,image_url,status,reviewed_by,reviewed_at,review_notes,created_at')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []) as CampaignCreationRequest[]
+
+  const rows = (data ?? []) as CampaignCreationRequest[]
+  const ids = Array.from(new Set(rows.map((row) => row.requested_by)))
+  if (!ids.length) return rows
+
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,display_name')
+    .in('id', ids)
+  if (profileError) throw profileError
+
+  const names = new Map<string, string | null>()
+  for (const profile of profiles ?? []) names.set(profile.id, profile.display_name)
+  return rows.map((row) => ({ ...row, requester_display_name: names.get(row.requested_by) ?? null }))
 }
 
 export async function loadAdminCampaignCreationRequests() {
