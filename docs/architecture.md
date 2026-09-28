@@ -9,7 +9,9 @@ La aplicación utiliza Supabase como fuente de verdad multiusuario. La UI mantie
 ## Principios de dominio
 
 - Un **usuario** es una cuenta de la aplicación.
+- Un **usuario** tiene además un rol global de plataforma: `USER` o `PLATFORM_ADMIN`.
 - Un **miembro de campaña** representa la participación de un usuario en una sala y tiene un rol contextual: `GM` o `PLAYER`.
+- Crear una campaña no está abierto a cualquier cuenta: un usuario solicita la creación y un `PLATFORM_ADMIN` la aprueba o rechaza.
 - Un mismo usuario puede ser GM en una campaña y jugador en otra.
 - Un **personaje** pertenece a una participación/campaña, no directamente al usuario global.
 - Un **Pokémon capturado** es una instancia individual de una especie, por lo que especie y Pokémon del jugador son conceptos diferentes.
@@ -79,6 +81,25 @@ Next.js App Router
 
 La autorización debe comprobarse en servidor. Ocultar botones en React no es suficiente.
 
+La aplicación separa tres conceptos:
+
+```text
+PLATFORM_ADMIN -> administra la plataforma y aprueba/gestiona campañas
+GM             -> administra una campaña concreta
+PLAYER         -> participa en una campaña
+```
+
+Un usuario puede ser GM en una campaña y PLAYER en otra. El rol `PLATFORM_ADMIN` es global y está almacenado en `profiles.platform_role`; no se deriva del correo en el frontend.
+
+La creación de campañas sigue este flujo:
+
+```text
+USER -> campaign_creation_requests -> PLATFORM_ADMIN -> APPROVED -> campaign ACTIVE
+                                  \-> REJECTED
+```
+
+Una solicitud pendiente por usuario evita la creación masiva de solicitudes. El administrador puede aprobar, rechazar, archivar, reactivar o eliminar campañas.
+
 Ejemplo conceptual:
 
 ```text
@@ -99,6 +120,10 @@ El asistente tendrá tres fuentes principales de contexto:
 3. **Personaje:** atributos, clases, rasgos, talentos, Pokémon, objetos y recursos actuales.
 
 Preguntas sobre datos estructurados deben consultar primero la base de datos. Preguntas sobre reglas deben consultar el conocimiento de reglas. El LLM se utiliza para interpretar y presentar la respuesta, no como fuente de verdad.
+
+## Estados de campaña
+
+Las campañas manejan `ACTIVE`, `PAUSED`, `ARCHIVED` y estados administrativos relacionados con el flujo de aprobación. Archivar conserva los datos de la campaña; eliminar es una operación administrativa destructiva y se reserva al administrador de plataforma.
 
 ## Invitaciones
 
@@ -123,7 +148,8 @@ Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista 
 3. Creación de salas con código de invitación persistente.
 4. Unión mediante código o enlace `?invite=CODIGO`, usando una función transaccional protegida.
 5. Fichas, Pokémon, inventario y sesiones leídos desde PostgreSQL.
-6. RLS aplicado por pertenencia a campaña y rol GM/PLAYER.
+6. RLS aplicado por pertenencia a campaña, rol GM/PLAYER y rol administrativo de plataforma.
+7. Solicitudes de creación de campaña y panel de administración de salas.
 
 ## Próximas fases
 
