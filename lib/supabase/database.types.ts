@@ -833,6 +833,20 @@ export type Database = {
         Args: { request_id_input: string; review_notes_input?: string }
         Returns: Json
       }
+      search_platform_users: {
+        Args: { search_query?: string }
+        Returns: {
+          display_name: string
+          email: string
+          email_confirmed: boolean
+          id: string
+          platform_role: string
+        }[]
+      }
+      set_platform_admin: {
+        Args: { make_admin: boolean; target_user_id: string }
+        Returns: boolean
+      }
       submit_campaign_creation_request: {
         Args: {
           request_description?: string
