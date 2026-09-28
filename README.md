@@ -96,8 +96,13 @@ La configuración de Supabase usa variables de entorno:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SITE_URL` (opcional; en producción se recomienda definirla con la URL pública de Vercel)
 
 Nunca se debe colocar una service-role key en el cliente ni en el repositorio.
+
+## Autenticación en producción
+
+La confirmación de correo y la recuperación de contraseña utilizan URLs públicas de Vercel. La aplicación usa `@supabase/ssr` con flujo PKCE y el callback `/auth/confirm`, por lo que no depende de un servidor local para validar cuentas. Configura en Supabase Auth la URL pública de producción y permite `/auth/confirm` y `/auth/reset` como Redirect URLs.
 
 ## Desarrollo local
 
