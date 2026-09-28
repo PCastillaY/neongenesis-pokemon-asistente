@@ -6,6 +6,8 @@ import {
   Backpack,
   Bot,
   Check,
+  Eye,
+  EyeOff,
 
   ChevronRight,
   Copy,
@@ -41,6 +43,8 @@ import {
   rejectCampaignCreationRequest,
   submitCampaignCreationRequest,
   updateCampaignStatus,
+  searchPlatformUsers,
+  setPlatformAdmin,
 } from '@/lib/neogenesis/data'
 import type { Campaign, CampaignMember, CampaignSession, Character, Pokemon } from '@/lib/neogenesis/types'
 import type { CampaignCreationRequest } from '@/lib/neogenesis/data'
@@ -79,50 +83,77 @@ function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
   </article>
 }
 
+function PasswordField({ value, onChange, placeholder, autoComplete, required = true }: { value: string; onChange: (value: string) => void; placeholder: string; autoComplete?: string; required?: boolean }) {
+  const [visible, setVisible] = useState(false)
+  return <div className="relative"><input type={visible ? 'text' : 'password'} value={value} onChange={(e) => onChange(e.target.value)} required={required} minLength={6} autoComplete={autoComplete} className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 pr-12 text-sm outline-none placeholder:text-white/25" placeholder={placeholder} /><button type="button" onClick={() => setVisible(!visible)} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-white/40" aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button></div>
+}
+
 function AuthScreen() {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot' | 'reset'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
 
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') { setMode('reset'); setMessage('') }
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
   async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setMessage('')
-    const result = mode === 'signin'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } })
-    setBusy(false)
-    if (result.error) {
-      setMessage(result.error.message)
-      return
-    }
-    if (mode === 'signup' && !result.data.session) {
-      setMessage('Cuenta creada. Revisa tu correo para confirmar el acceso.')
-    }
+    event.preventDefault(); setBusy(true); setMessage('')
+    try {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin) + '/auth/reset' })
+        if (error) throw error
+        setMessage('Si existe una cuenta con ese correo, recibirás un enlace para restablecer la contraseña.')
+        return
+      }
+      if (mode === 'reset') {
+        if (password !== confirmation) throw new Error('Las contraseñas no coinciden.')
+        if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.')
+        const { error } = await supabase.auth.updateUser({ password })
+        if (error) throw error
+        setPassword(''); setConfirmation(''); setMessage('Contraseña actualizada. Ya puedes continuar usando tu cuenta.'); setMode('signin')
+        return
+      }
+      if (mode === 'signup') {
+        if (password !== confirmation) throw new Error('Las contraseñas no coinciden.')
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: siteUrl + '/auth/confirm', data: { display_name: displayName.trim() } } })
+        if (error) throw error
+        if (!data.session) setMessage('Cuenta creada. Revisa tu correo para confirmar el acceso.')
+        return
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      if (error) throw error
+    } catch (error: any) {
+      setMessage(error?.message || 'No se pudo completar la operación.')
+    } finally { setBusy(false) }
   }
 
-  return <main className="min-h-dvh bg-[#071018] text-white">
-    <div className="mx-auto flex min-h-dvh w-full max-w-md items-center border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_42%,#050a0f_100%)] px-5 py-10">
-      <div className="w-full">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-200/70">NeoGénesis</p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight">{mode === 'signin' ? 'Entrar' : 'Crear cuenta'}</h1>
-        <p className="mt-2 text-sm leading-6 text-white/50">Tu cuenta conserva tus salas, personajes, Pokémon e inventario entre dispositivos.</p>
-        <form onSubmit={submit} className="mt-8 space-y-3">
-          {mode === 'signup' && <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm outline-none placeholder:text-white/25" placeholder="Nombre visible" />}
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm outline-none placeholder:text-white/25" placeholder="Correo" />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm outline-none placeholder:text-white/25" placeholder="Contraseña" />
-          {message && <p className="rounded-2xl border border-cyan-300/10 bg-cyan-300/5 p-3 text-xs leading-5 text-cyan-100/80">{message}</p>}
-          <button disabled={busy} className="w-full rounded-2xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">{busy ? 'Procesando…' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}</button>
-        </form>
-        <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setMessage('') }} className="mt-5 w-full text-center text-xs text-cyan-200/70">
-          {mode === 'signin' ? '¿No tienes cuenta? Crear una' : 'Ya tengo una cuenta'}
-        </button>
-      </div>
-    </div>
-  </main>
+  const title = mode === 'signup' ? 'Crear cuenta' : mode === 'forgot' ? 'Recuperar contraseña' : mode === 'reset' ? 'Nueva contraseña' : 'Entrar'
+  const submitLabel = mode === 'signup' ? 'Crear cuenta' : mode === 'forgot' ? 'Enviar enlace' : mode === 'reset' ? 'Guardar contraseña' : 'Entrar'
+
+  return <main className="min-h-dvh bg-[#071018] text-white"><div className="mx-auto flex min-h-dvh w-full max-w-md items-center border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_42%,#050a0f_100%)] px-5 py-10"><div className="w-full">
+    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-200/70">NeoGénesis</p><h1 className="mt-2 text-4xl font-black tracking-tight">{title}</h1>
+    <p className="mt-2 text-sm leading-6 text-white/50">{mode === 'forgot' ? 'Introduce tu correo y te enviaremos un enlace para recuperar el acceso.' : 'Tu cuenta conserva tus salas, personajes, Pokémon e inventario entre dispositivos.'}</p>
+    <form onSubmit={submit} className="mt-8 space-y-3">
+      {mode === 'signup' && <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required autoComplete="name" className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm outline-none placeholder:text-white/25" placeholder="Nombre visible" />}
+      {mode !== 'reset' && <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm outline-none placeholder:text-white/25" placeholder="Correo" />}
+      {mode !== 'forgot' && <PasswordField value={password} onChange={setPassword} placeholder="Contraseña" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} />}
+      {(mode === 'signup' || mode === 'reset') && <PasswordField value={confirmation} onChange={setConfirmation} placeholder="Confirmar contraseña" autoComplete="new-password" />}
+      {message && <p className="rounded-2xl border border-cyan-300/10 bg-cyan-300/5 p-3 text-xs leading-5 text-cyan-100/80">{message}</p>}
+      <button disabled={busy} className="w-full rounded-2xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">{busy ? 'Procesando…' : submitLabel}</button>
+    </form>
+    {mode === 'signin' && <button onClick={() => { setMode('forgot'); setMessage('') }} className="mt-4 w-full text-center text-xs text-cyan-200/70">¿Olvidaste tu contraseña?</button>}
+    {mode !== 'reset' && <button onClick={() => { setMode(mode === 'signin' || mode === 'forgot' ? 'signup' : 'signin'); setMessage(''); setPassword(''); setConfirmation('') }} className="mt-3 w-full text-center text-xs text-cyan-200/70">{mode === 'signup' || mode === 'forgot' ? 'Ya tengo una cuenta' : '¿No tienes cuenta? Crear una'}</button>}
+    {mode === 'reset' && <button type="button" onClick={() => { setMode('signin'); setMessage('') }} className="mt-4 w-full text-center text-xs text-cyan-200/70">Volver a iniciar sesión</button>}
+  </div></div></main>
 }
 
 function RoomPicker({ campaigns, onSelect, onRequest, onJoin, onSignOut, creationRequests, isAdmin, onAdmin }: {
@@ -259,6 +290,22 @@ function AssistantTab({ character }: { character?: Character }) {
   return <div className="space-y-4"><section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5"><div className="flex items-center gap-3"><div className="rounded-2xl bg-cyan-300/10 p-3"><Bot className="size-5 text-cyan-200" /></div><div><p className="font-bold">Asistente NeoGénesis</p><p className="text-xs text-white/45">Contexto: {character?.name || 'sin personaje'} · {character?.pokemon.length || 0} Pokémon</p></div></div><p className="mt-5 text-sm leading-6 text-white/65">El estado estructurado ya proviene de Supabase. La capa de reglas y LLM se conectará sobre estas entidades, sin volver al estado de demostración.</p></section></div>
 }
 
+function AdminUsersPanel({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState('')
+  const [users, setUsers] = useState<Array<{ id: string; email: string | null; display_name: string | null; platform_role: string; email_confirmed: boolean }>>([])
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const search = useCallback(async () => { setBusy(true); setMessage(''); try { setUsers(await searchPlatformUsers(query)) } catch (e: any) { setMessage(e.message || 'No se pudieron cargar los usuarios.') } finally { setBusy(false) } }, [query])
+  useEffect(() => { search().catch(() => {}) }, [search])
+  async function toggle(userId: string, makeAdmin: boolean) { setBusy(true); setMessage(''); try { await setPlatformAdmin(userId, makeAdmin); await search() } catch (e: any) { setMessage(e.message || 'No se pudo actualizar el administrador.') } finally { setBusy(false) } }
+  return <div className="fixed inset-0 z-50 bg-[#050a0f]/95 p-4 backdrop-blur-xl"><div className="mx-auto flex min-h-full w-full max-w-md flex-col">
+    <div className="flex items-center justify-between gap-3 py-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200/70">Plataforma</p><h2 className="text-2xl font-black">Administradores</h2></div><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60">Cerrar</button></div>
+    <div className="mt-3 flex gap-2"><input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') search() }} placeholder="Buscar por nombre o correo" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm outline-none" /><button onClick={search} disabled={busy} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-slate-950">Buscar</button></div>
+    {message && <p className="mt-3 rounded-xl border border-rose-300/15 bg-rose-300/5 p-3 text-xs text-rose-100">{message}</p>}
+    <div className="mt-4 flex-1 space-y-2 overflow-y-auto pb-6">{users.map((user) => <article key={user.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{user.display_name || 'Sin nombre'}</p><p className="truncate text-xs text-white/45">{user.email || 'Sin correo'}</p><p className="mt-1 text-[10px] text-white/30">{user.email_confirmed ? 'Correo confirmado' : 'Correo pendiente'}</p></div><span className="shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] uppercase text-white/45">{user.platform_role}</span></div><button disabled={busy} onClick={() => toggle(user.id, user.platform_role !== 'PLATFORM_ADMIN')} className="mt-3 w-full rounded-xl border border-cyan-300/10 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-200 disabled:opacity-40">{user.platform_role === 'PLATFORM_ADMIN' ? 'Quitar administrador' : 'Nombrar administrador'}</button></article>)}{!busy && users.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-5 text-center text-sm text-white/40">No se encontraron usuarios.</p>}</div>
+  </div></div>
+}
+
 function AdminPanel({ requests, campaigns, onBack, onRefresh, onApprove, onReject, onStatus, onDelete, onCreate }: {
   requests: CampaignCreationRequest[]
   campaigns: Campaign[]
@@ -271,6 +318,7 @@ function AdminPanel({ requests, campaigns, onBack, onRefresh, onApprove, onRejec
   onCreate: (name: string, description: string) => Promise<void>
 }) {
   const [section, setSection] = useState<'requests' | 'campaigns'>('requests')
+  const [showUsers, setShowUsers] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)
@@ -294,7 +342,7 @@ function AdminPanel({ requests, campaigns, onBack, onRefresh, onApprove, onRejec
     <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/5 bg-[radial-gradient(circle_at_top,#123344_0%,#071018_38%,#050a0f_100%)] px-4 pb-10 pt-6">
       <div className="flex items-center justify-between gap-3">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-200/70">NeoGénesis</p><h1 className="mt-1 text-3xl font-black">Administración</h1></div>
-        <button onClick={onBack} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60">Volver</button>
+        <div className="flex gap-2"><button onClick={() => setShowUsers(true)} className="rounded-xl border border-cyan-300/15 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-200">Administradores</button><button onClick={onBack} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60">Volver</button></div>
       </div>
       <div className="mt-6 grid grid-cols-2 gap-2"><button onClick={() => setSection('requests')} className={'rounded-xl px-3 py-3 text-xs ' + (section === 'requests' ? 'bg-cyan-300/10 text-cyan-200' : 'bg-white/[0.04] text-white/45')}>Solicitudes {requests.filter(r => r.status === 'PENDING').length ? '(' + requests.filter(r => r.status === 'PENDING').length + ')' : ''}</button><button onClick={() => setSection('campaigns')} className={'rounded-xl px-3 py-3 text-xs ' + (section === 'campaigns' ? 'bg-cyan-300/10 text-cyan-200' : 'bg-white/[0.04] text-white/45')}>Salas ({campaigns.length})</button></div>
       {message && <p className="mt-4 rounded-xl border border-rose-300/15 bg-rose-300/5 p-3 text-xs text-rose-100">{message}</p>}
@@ -309,6 +357,7 @@ function AdminPanel({ requests, campaigns, onBack, onRefresh, onApprove, onRejec
         {campaigns.map(campaign => <article key={campaign.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{campaign.name}</p><p className="text-xs text-white/40">{campaign.status || 'ACTIVE'}</p></div><span className="text-[10px] text-white/30">{campaign.id.slice(0, 8)}…</span></div><div className="mt-3 flex gap-2">{campaign.status === 'ARCHIVED' ? <button onClick={() => run(() => onStatus(campaign.id, 'ACTIVE'))} className="rounded-xl bg-cyan-300/10 px-3 py-2 text-xs text-cyan-200">Reactivar</button> : <button onClick={() => run(() => onStatus(campaign.id, 'ARCHIVED'))} className="flex items-center gap-1 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/60"><Archive className="size-3" /> Archivar</button>}<button onClick={() => { if (window.confirm('Esta acción eliminará permanentemente la sala y sus datos. ¿Continuar?')) run(() => onDelete(campaign.id)) }} className="flex items-center gap-1 rounded-xl bg-rose-300/5 px-3 py-2 text-xs text-rose-100"><Trash2 className="size-3" /> Borrar</button></div></article>)}
       </div>}
     </div>
+    {showUsers && <AdminUsersPanel onClose={() => setShowUsers(false)} />}
   </main>
 }
 
