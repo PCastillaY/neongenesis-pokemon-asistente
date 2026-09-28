@@ -1,1 +1,976 @@
-{"types":"export type Json =\n  | string\n  | number\n  | boolean\n  | null\n  | { [key: string]: Json | undefined }\n  | Json[]\n\nexport type Database = {\n  // Allows to automatically instantiate createClient with right options\n  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)\n  __InternalSupabase: {\n    PostgrestVersion: \"14.5\"\n  }\n  public: {\n    Tables: {\n      campaign_events: {\n        Row: {\n          actor_user_id: string | null\n          campaign_id: string\n          created_at: string\n          detail: string\n          entity_id: string | null\n          entity_type: string | null\n          event_type: string\n          id: string\n          payload: Json\n          session_id: string | null\n          title: string\n        }\n        Insert: {\n          actor_user_id?: string | null\n          campaign_id: string\n          created_at?: string\n          detail?: string\n          entity_id?: string | null\n          entity_type?: string | null\n          event_type: string\n          id?: string\n          payload?: Json\n          session_id?: string | null\n          title: string\n        }\n        Update: {\n          actor_user_id?: string | null\n          campaign_id?: string\n          created_at?: string\n          detail?: string\n          entity_id?: string | null\n          entity_type?: string | null\n          event_type?: string\n          id?: string\n          payload?: Json\n          session_id?: string | null\n          title?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"campaign_events_campaign_id_fkey\"\n            columns: [\"campaign_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaigns\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"campaign_events_session_id_fkey\"\n            columns: [\"session_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaign_sessions\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      campaign_invitations: {\n        Row: {\n          campaign_id: string\n          code: string\n          created_at: string\n          created_by: string\n          expires_at: string | null\n          id: string\n          max_uses: number | null\n          uses: number\n        }\n        Insert: {\n          campaign_id: string\n          code: string\n          created_at?: string\n          created_by: string\n          expires_at?: string | null\n          id?: string\n          max_uses?: number | null\n          uses?: number\n        }\n        Update: {\n          campaign_id?: string\n          code?: string\n          created_at?: string\n          created_by?: string\n          expires_at?: string | null\n          id?: string\n          max_uses?: number | null\n          uses?: number\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"campaign_invitations_campaign_id_fkey\"\n            columns: [\"campaign_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaigns\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      campaign_members: {\n        Row: {\n          campaign_id: string\n          display_name: string | null\n          joined_at: string\n          role: string\n          user_id: string\n        }\n        Insert: {\n          campaign_id: string\n          display_name?: string | null\n          joined_at?: string\n          role: string\n          user_id: string\n        }\n        Update: {\n          campaign_id?: string\n          display_name?: string | null\n          joined_at?: string\n          role?: string\n          user_id?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"campaign_members_campaign_id_fkey\"\n            columns: [\"campaign_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaigns\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      campaign_sessions: {\n        Row: {\n          campaign_id: string\n          created_at: string\n          created_by: string\n          id: string\n          notes: string\n          played_at: string | null\n          session_number: number\n          summary: string\n          title: string\n          updated_at: string\n        }\n        Insert: {\n          campaign_id: string\n          created_at?: string\n          created_by: string\n          id?: string\n          notes?: string\n          played_at?: string | null\n          session_number: number\n          summary?: string\n          title?: string\n          updated_at?: string\n        }\n        Update: {\n          campaign_id?: string\n          created_at?: string\n          created_by?: string\n          id?: string\n          notes?: string\n          played_at?: string | null\n          session_number?: number\n          summary?: string\n          title?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"campaign_sessions_campaign_id_fkey\"\n            columns: [\"campaign_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaigns\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      campaigns: {\n        Row: {\n          created_at: string\n          created_by: string\n          description: string\n          id: string\n          image_url: string | null\n          invite_code: string | null\n          name: string\n          progression_mode: string\n          updated_at: string\n        }\n        Insert: {\n          created_at?: string\n          created_by: string\n          description?: string\n          id?: string\n          image_url?: string | null\n          invite_code?: string | null\n          name: string\n          progression_mode?: string\n          updated_at?: string\n        }\n        Update: {\n          created_at?: string\n          created_by?: string\n          description?: string\n          id?: string\n          image_url?: string | null\n          invite_code?: string | null\n          name?: string\n          progression_mode?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      captured_pokemon: {\n        Row: {\n          ability: string\n          captured_at: string | null\n          character_id: string\n          created_at: string\n          experience: number\n          held_item: string | null\n          hp: number\n          id: string\n          image_url: string | null\n          level: number\n          max_hp: number\n          moves: Json\n          nature: string | null\n          nickname: string\n          notes: string\n          sheet_data: Json\n          species_id: string | null\n          status: string\n          types: Json\n          updated_at: string\n        }\n        Insert: {\n          ability?: string\n          captured_at?: string | null\n          character_id: string\n          created_at?: string\n          experience?: number\n          held_item?: string | null\n          hp?: number\n          id?: string\n          image_url?: string | null\n          level?: number\n          max_hp?: number\n          moves?: Json\n          nature?: string | null\n          nickname?: string\n          notes?: string\n          sheet_data?: Json\n          species_id?: string | null\n          status?: string\n          types?: Json\n          updated_at?: string\n        }\n        Update: {\n          ability?: string\n          captured_at?: string | null\n          character_id?: string\n          created_at?: string\n          experience?: number\n          held_item?: string | null\n          hp?: number\n          id?: string\n          image_url?: string | null\n          level?: number\n          max_hp?: number\n          moves?: Json\n          nature?: string | null\n          nickname?: string\n          notes?: string\n          sheet_data?: Json\n          species_id?: string | null\n          status?: string\n          types?: Json\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"captured_pokemon_character_id_fkey\"\n            columns: [\"character_id\"]\n            isOneToOne: false\n            referencedRelation: \"characters\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"captured_pokemon_species_id_fkey\"\n            columns: [\"species_id\"]\n            isOneToOne: false\n            referencedRelation: \"pokemon_species\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      character_inventory: {\n        Row: {\n          character_id: string\n          created_at: string\n          custom_name: string | null\n          id: string\n          item_id: string | null\n          metadata: Json\n          quantity: number\n          updated_at: string\n        }\n        Insert: {\n          character_id: string\n          created_at?: string\n          custom_name?: string | null\n          id?: string\n          item_id?: string | null\n          metadata?: Json\n          quantity?: number\n          updated_at?: string\n        }\n        Update: {\n          character_id?: string\n          created_at?: string\n          custom_name?: string | null\n          id?: string\n          item_id?: string | null\n          metadata?: Json\n          quantity?: number\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"character_inventory_character_id_fkey\"\n            columns: [\"character_id\"]\n            isOneToOne: false\n            referencedRelation: \"characters\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"character_inventory_item_id_fkey\"\n            columns: [\"item_id\"]\n            isOneToOne: false\n            referencedRelation: \"items\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      characters: {\n        Row: {\n          abilities: Json\n          action_points: number\n          attributes: Json\n          avatar_url: string | null\n          background: string\n          campaign_id: string\n          capabilities: Json\n          classes: Json\n          concept: string\n          created_at: string\n          experience: number\n          features: Json\n          hp: number\n          id: string\n          level: number\n          max_action_points: number\n          max_hp: number\n          money: number\n          name: string\n          notes: string\n          stats: Json\n          talents: Json\n          updated_at: string\n          user_id: string\n        }\n        Insert: {\n          abilities?: Json\n          action_points?: number\n          attributes?: Json\n          avatar_url?: string | null\n          background?: string\n          campaign_id: string\n          capabilities?: Json\n          classes?: Json\n          concept?: string\n          created_at?: string\n          experience?: number\n          features?: Json\n          hp?: number\n          id?: string\n          level?: number\n          max_action_points?: number\n          max_hp?: number\n          money?: number\n          name: string\n          notes?: string\n          stats?: Json\n          talents?: Json\n          updated_at?: string\n          user_id: string\n        }\n        Update: {\n          abilities?: Json\n          action_points?: number\n          attributes?: Json\n          avatar_url?: string | null\n          background?: string\n          campaign_id?: string\n          capabilities?: Json\n          classes?: Json\n          concept?: string\n          created_at?: string\n          experience?: number\n          features?: Json\n          hp?: number\n          id?: string\n          level?: number\n          max_action_points?: number\n          max_hp?: number\n          money?: number\n          name?: string\n          notes?: string\n          stats?: Json\n          talents?: Json\n          updated_at?: string\n          user_id?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"characters_campaign_id_user_id_fkey\"\n            columns: [\"campaign_id\", \"user_id\"]\n            isOneToOne: true\n            referencedRelation: \"campaign_members\"\n            referencedColumns: [\"campaign_id\", \"user_id\"]\n          },\n        ]\n      }\n      inventory_events: {\n        Row: {\n          character_id: string\n          created_at: string\n          created_by: string\n          event_type: string\n          id: string\n          inventory_id: string | null\n          item_id: string | null\n          quantity_after: number | null\n          quantity_delta: number\n          reason: string\n          session_id: string | null\n        }\n        Insert: {\n          character_id: string\n          created_at?: string\n          created_by: string\n          event_type: string\n          id?: string\n          inventory_id?: string | null\n          item_id?: string | null\n          quantity_after?: number | null\n          quantity_delta: number\n          reason?: string\n          session_id?: string | null\n        }\n        Update: {\n          character_id?: string\n          created_at?: string\n          created_by?: string\n          event_type?: string\n          id?: string\n          inventory_id?: string | null\n          item_id?: string | null\n          quantity_after?: number | null\n          quantity_delta?: number\n          reason?: string\n          session_id?: string | null\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"inventory_events_character_id_fkey\"\n            columns: [\"character_id\"]\n            isOneToOne: false\n            referencedRelation: \"characters\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"inventory_events_inventory_id_fkey\"\n            columns: [\"inventory_id\"]\n            isOneToOne: false\n            referencedRelation: \"character_inventory\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"inventory_events_item_id_fkey\"\n            columns: [\"item_id\"]\n            isOneToOne: false\n            referencedRelation: \"items\"\n            referencedColumns: [\"id\"]\n          },\n          {\n            foreignKeyName: \"inventory_events_session_id_fkey\"\n            columns: [\"session_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaign_sessions\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      inventory_items: {\n        Row: {\n          category: string\n          character_id: string\n          created_at: string\n          id: string\n          name: string\n          quantity: number\n          updated_at: string\n        }\n        Insert: {\n          category?: string\n          character_id: string\n          created_at?: string\n          id?: string\n          name: string\n          quantity?: number\n          updated_at?: string\n        }\n        Update: {\n          category?: string\n          character_id?: string\n          created_at?: string\n          id?: string\n          name?: string\n          quantity?: number\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"inventory_items_character_id_fkey\"\n            columns: [\"character_id\"]\n            isOneToOne: false\n            referencedRelation: \"characters\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      items: {\n        Row: {\n          category: string\n          created_at: string\n          created_by: string | null\n          description: string\n          id: string\n          image_url: string | null\n          name: string\n          rules_data: Json\n          updated_at: string\n        }\n        Insert: {\n          category?: string\n          created_at?: string\n          created_by?: string | null\n          description?: string\n          id?: string\n          image_url?: string | null\n          name: string\n          rules_data?: Json\n          updated_at?: string\n        }\n        Update: {\n          category?: string\n          created_at?: string\n          created_by?: string | null\n          description?: string\n          id?: string\n          image_url?: string | null\n          name?: string\n          rules_data?: Json\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      pokemon: {\n        Row: {\n          ability: string\n          character_id: string\n          created_at: string\n          hp: number\n          id: string\n          image_url: string | null\n          level: number\n          max_hp: number\n          moves: Json\n          name: string\n          nature: string | null\n          species: string\n          types: Json\n          updated_at: string\n        }\n        Insert: {\n          ability?: string\n          character_id: string\n          created_at?: string\n          hp?: number\n          id?: string\n          image_url?: string | null\n          level?: number\n          max_hp?: number\n          moves?: Json\n          name: string\n          nature?: string | null\n          species: string\n          types?: Json\n          updated_at?: string\n        }\n        Update: {\n          ability?: string\n          character_id?: string\n          created_at?: string\n          hp?: number\n          id?: string\n          image_url?: string | null\n          level?: number\n          max_hp?: number\n          moves?: Json\n          name?: string\n          nature?: string | null\n          species?: string\n          types?: Json\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"pokemon_character_id_fkey\"\n            columns: [\"character_id\"]\n            isOneToOne: false\n            referencedRelation: \"characters\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      pokemon_species: {\n        Row: {\n          abilities: Json\n          base_stats: Json\n          capabilities: Json\n          created_at: string\n          description: string\n          dex_number: number | null\n          id: string\n          image_url: string | null\n          name: string\n          rules_data: Json\n          types: Json\n          updated_at: string\n        }\n        Insert: {\n          abilities?: Json\n          base_stats?: Json\n          capabilities?: Json\n          created_at?: string\n          description?: string\n          dex_number?: number | null\n          id?: string\n          image_url?: string | null\n          name: string\n          rules_data?: Json\n          types?: Json\n          updated_at?: string\n        }\n        Update: {\n          abilities?: Json\n          base_stats?: Json\n          capabilities?: Json\n          created_at?: string\n          description?: string\n          dex_number?: number | null\n          id?: string\n          image_url?: string | null\n          name?: string\n          rules_data?: Json\n          types?: Json\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      profiles: {\n        Row: {\n          avatar_url: string | null\n          created_at: string\n          display_name: string | null\n          id: string\n          updated_at: string\n        }\n        Insert: {\n          avatar_url?: string | null\n          created_at?: string\n          display_name?: string | null\n          id: string\n          updated_at?: string\n        }\n        Update: {\n          avatar_url?: string | null\n          created_at?: string\n          display_name?: string | null\n          id?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      session_notes: {\n        Row: {\n          author_user_id: string | null\n          content: string\n          created_at: string\n          id: string\n          is_gm_only: boolean\n          note_type: string\n          session_id: string\n          title: string\n          updated_at: string\n        }\n        Insert: {\n          author_user_id?: string | null\n          content?: string\n          created_at?: string\n          id?: string\n          is_gm_only?: boolean\n          note_type?: string\n          session_id: string\n          title?: string\n          updated_at?: string\n        }\n        Update: {\n          author_user_id?: string | null\n          content?: string\n          created_at?: string\n          id?: string\n          is_gm_only?: boolean\n          note_type?: string\n          session_id?: string\n          title?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"session_notes_session_id_fkey\"\n            columns: [\"session_id\"]\n            isOneToOne: false\n            referencedRelation: \"campaign_sessions\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n    }\n    Views: {\n      [_ in never]: never\n    }\n    Functions: {\n      join_campaign_by_invite: {\n        Args: { invite_code_input: string }\n        Returns: Json\n      }\n    }\n    Enums: {\n      [_ in never]: never\n    }\n    CompositeTypes: {\n      [_ in never]: never\n    }\n  }\n}\n\ntype DatabaseWithoutInternals = Omit<Database, \"__InternalSupabase\">\n\ntype DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, \"public\">]\n\nexport type Tables<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof (DefaultSchema[\"Tables\"] & DefaultSchema[\"Views\"])\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])[TableName] extends {\n      Row: infer R\n    }\n    ? R\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])\n    ? (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])[DefaultSchemaTableNameOrOptions] extends {\n        Row: infer R\n      }\n      ? R\n      : never\n    : never\n\nexport type TablesInsert<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Insert: infer I\n    }\n    ? I\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Insert: infer I\n      }\n      ? I\n      : never\n    : never\n\nexport type TablesUpdate<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Update: infer U\n    }\n    ? U\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Update: infer U\n      }\n      ? U\n      : never\n    : never\n\nexport type Enums<\n  DefaultSchemaEnumNameOrOptions extends\n    | keyof DefaultSchema[\"Enums\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  EnumName extends (DefaultSchemaEnumNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"]\n    : never) = never,\n> = DefaultSchemaEnumNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"][EnumName]\n  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema[\"Enums\"]\n    ? DefaultSchema[\"Enums\"][DefaultSchemaEnumNameOrOptions]\n    : never\n\nexport type CompositeTypes<\n  PublicCompositeTypeNameOrOptions extends\n    | keyof DefaultSchema[\"CompositeTypes\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"]\n    : never) = never,\n> = PublicCompositeTypeNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"][CompositeTypeName]\n  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema[\"CompositeTypes\"]\n    ? DefaultSchema[\"CompositeTypes\"][PublicCompositeTypeNameOrOptions]\n    : never\n\nexport const Constants = {\n  public: {\n    Enums: {},\n  },\n} as const\n"}
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      campaign_creation_requests: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          name: string
+          progression_mode: string
+          requested_by: string
+          review_notes: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          progression_mode?: string
+          requested_by: string
+          review_notes?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          progression_mode?: string
+          requested_by?: string
+          review_notes?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campaign_events: {
+        Row: {
+          actor_user_id: string | null
+          campaign_id: string
+          created_at: string
+          detail: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          payload: Json
+          session_id: string | null
+          title: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          campaign_id: string
+          created_at?: string
+          detail?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          session_id?: string | null
+          title: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          campaign_id?: string
+          created_at?: string
+          detail?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          session_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_invitations: {
+        Row: {
+          campaign_id: string
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          uses: number
+        }
+        Insert: {
+          campaign_id: string
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          uses?: number
+        }
+        Update: {
+          campaign_id?: string
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_invitations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_members: {
+        Row: {
+          campaign_id: string
+          display_name: string | null
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          display_name?: string | null
+          joined_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          display_name?: string | null
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_members_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_sessions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by: string
+          id: string
+          notes: string
+          played_at: string | null
+          session_number: number
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string
+          played_at?: string | null
+          session_number: number
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string
+          played_at?: string | null
+          session_number?: number
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          name: string
+          progression_mode: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          invite_code?: string | null
+          name: string
+          progression_mode?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          invite_code?: string | null
+          name?: string
+          progression_mode?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      captured_pokemon: {
+        Row: {
+          ability: string
+          captured_at: string | null
+          character_id: string
+          created_at: string
+          experience: number
+          held_item: string | null
+          hp: number
+          id: string
+          image_url: string | null
+          level: number
+          max_hp: number
+          moves: Json
+          nature: string | null
+          nickname: string
+          notes: string
+          sheet_data: Json
+          species_id: string | null
+          status: string
+          types: Json
+          updated_at: string
+        }
+        Insert: {
+          ability?: string
+          captured_at?: string | null
+          character_id: string
+          created_at?: string
+          experience?: number
+          held_item?: string | null
+          hp?: number
+          id?: string
+          image_url?: string | null
+          level?: number
+          max_hp?: number
+          moves?: Json
+          nature?: string | null
+          nickname?: string
+          notes?: string
+          sheet_data?: Json
+          species_id?: string | null
+          status?: string
+          types?: Json
+          updated_at?: string
+        }
+        Update: {
+          ability?: string
+          captured_at?: string | null
+          character_id?: string
+          created_at?: string
+          experience?: number
+          held_item?: string | null
+          hp?: number
+          id?: string
+          image_url?: string | null
+          level?: number
+          max_hp?: number
+          moves?: Json
+          nature?: string | null
+          nickname?: string
+          notes?: string
+          sheet_data?: Json
+          species_id?: string | null
+          status?: string
+          types?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captured_pokemon_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captured_pokemon_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "pokemon_species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_inventory: {
+        Row: {
+          character_id: string
+          created_at: string
+          custom_name: string | null
+          id: string
+          item_id: string | null
+          metadata: Json
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          item_id?: string | null
+          metadata?: Json
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          item_id?: string | null
+          metadata?: Json
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_inventory_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      characters: {
+        Row: {
+          abilities: Json
+          action_points: number
+          attributes: Json
+          avatar_url: string | null
+          background: string
+          campaign_id: string
+          capabilities: Json
+          classes: Json
+          concept: string
+          created_at: string
+          experience: number
+          features: Json
+          hp: number
+          id: string
+          level: number
+          max_action_points: number
+          max_hp: number
+          money: number
+          name: string
+          notes: string
+          stats: Json
+          talents: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          abilities?: Json
+          action_points?: number
+          attributes?: Json
+          avatar_url?: string | null
+          background?: string
+          campaign_id: string
+          capabilities?: Json
+          classes?: Json
+          concept?: string
+          created_at?: string
+          experience?: number
+          features?: Json
+          hp?: number
+          id?: string
+          level?: number
+          max_action_points?: number
+          max_hp?: number
+          money?: number
+          name: string
+          notes?: string
+          stats?: Json
+          talents?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          abilities?: Json
+          action_points?: number
+          attributes?: Json
+          avatar_url?: string | null
+          background?: string
+          campaign_id?: string
+          capabilities?: Json
+          classes?: Json
+          concept?: string
+          created_at?: string
+          experience?: number
+          features?: Json
+          hp?: number
+          id?: string
+          level?: number
+          max_action_points?: number
+          max_hp?: number
+          money?: number
+          name?: string
+          notes?: string
+          stats?: Json
+          talents?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "characters_campaign_id_user_id_fkey"
+            columns: ["campaign_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "campaign_members"
+            referencedColumns: ["campaign_id", "user_id"]
+          },
+        ]
+      }
+      inventory_events: {
+        Row: {
+          character_id: string
+          created_at: string
+          created_by: string
+          event_type: string
+          id: string
+          inventory_id: string | null
+          item_id: string | null
+          quantity_after: number | null
+          quantity_delta: number
+          reason: string
+          session_id: string | null
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          created_by: string
+          event_type: string
+          id?: string
+          inventory_id?: string | null
+          item_id?: string | null
+          quantity_after?: number | null
+          quantity_delta: number
+          reason?: string
+          session_id?: string | null
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          created_by?: string
+          event_type?: string
+          id?: string
+          inventory_id?: string | null
+          item_id?: string | null
+          quantity_after?: number | null
+          quantity_delta?: number
+          reason?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_events_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_events_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "character_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_events_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string
+          character_id: string
+          created_at: string
+          id: string
+          name: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          character_id: string
+          created_at?: string
+          id?: string
+          name: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          character_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          image_url: string | null
+          name: string
+          rules_data: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          rules_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          rules_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pokemon: {
+        Row: {
+          ability: string
+          character_id: string
+          created_at: string
+          hp: number
+          id: string
+          image_url: string | null
+          level: number
+          max_hp: number
+          moves: Json
+          name: string
+          nature: string | null
+          species: string
+          types: Json
+          updated_at: string
+        }
+        Insert: {
+          ability?: string
+          character_id: string
+          created_at?: string
+          hp?: number
+          id?: string
+          image_url?: string | null
+          level?: number
+          max_hp?: number
+          moves?: Json
+          name: string
+          nature?: string | null
+          species: string
+          types?: Json
+          updated_at?: string
+        }
+        Update: {
+          ability?: string
+          character_id?: string
+          created_at?: string
+          hp?: number
+          id?: string
+          image_url?: string | null
+          level?: number
+          max_hp?: number
+          moves?: Json
+          name?: string
+          nature?: string | null
+          species?: string
+          types?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pokemon_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pokemon_species: {
+        Row: {
+          abilities: Json
+          base_stats: Json
+          capabilities: Json
+          created_at: string
+          description: string
+          dex_number: number | null
+          id: string
+          image_url: string | null
+          name: string
+          rules_data: Json
+          types: Json
+          updated_at: string
+        }
+        Insert: {
+          abilities?: Json
+          base_stats?: Json
+          capabilities?: Json
+          created_at?: string
+          description?: string
+          dex_number?: number | null
+          id?: string
+          image_url?: string | null
+          name: string
+          rules_data?: Json
+          types?: Json
+          updated_at?: string
+        }
+        Update: {
+          abilities?: Json
+          base_stats?: Json
+          capabilities?: Json
+          created_at?: string
+          description?: string
+          dex_number?: number | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          rules_data?: Json
+          types?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          platform_role: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          platform_role?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          platform_role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      session_notes: {
+        Row: {
+          author_user_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_gm_only: boolean
+          note_type: string
+          session_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_user_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_gm_only?: boolean
+          note_type?: string
+          session_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          author_user_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_gm_only?: boolean
+          note_type?: string
+          session_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      approve_campaign_creation_request: {
+        Args: { request_id_input: string; review_notes_input?: string }
+        Returns: Json
+      }
+      join_campaign_by_invite: {
+        Args: { invite_code_input: string }
+        Returns: Json
+      }
+      reject_campaign_creation_request: {
+        Args: { request_id_input: string; review_notes_input?: string }
+        Returns: Json
+      }
+      submit_campaign_creation_request: {
+        Args: {
+          request_description?: string
+          request_image_url?: string
+          request_name: string
+          request_progression_mode?: string
+        }
+        Returns: string
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
