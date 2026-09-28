@@ -449,7 +449,7 @@ export default function NeoGenesisApp() {
 
   if (!campaign) {
     return <>
-      <RoomPicker campaigns={campaigns} onSelect={setSelectedCampaignId} onRequest={handleRequestCreation} onJoin={handleJoin} onSignOut={() => supabase.auth.signOut()} creationRequests={creationRequests} isAdmin={platformRole === 'PLATFORM_ADMIN'} onAdmin={async () => { await refreshAdmin(); setAdminOpen(true) }} />
+      <RoomPicker campaigns={campaigns} onSelect={setSelectedCampaignId} onRequest={handleRequestCreation} onJoin={handleJoin} onSignOut={async () => { await supabase.auth.signOut() }} creationRequests={creationRequests} isAdmin={platformRole === 'PLATFORM_ADMIN'} onAdmin={async () => { await refreshAdmin(); setAdminOpen(true) }} />
       {error && <div className="fixed inset-x-4 bottom-4 mx-auto max-w-md rounded-2xl border border-rose-300/15 bg-rose-300/10 p-3 text-xs text-rose-100">{error}</div>}
     </>
   }

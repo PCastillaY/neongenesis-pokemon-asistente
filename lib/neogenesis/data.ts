@@ -220,7 +220,7 @@ export async function submitCampaignCreationRequest(
     request_name: name.trim(),
     request_description: description.trim(),
     request_progression_mode: progressionMode,
-    request_image_url: null,
+    request_image_url: undefined,
   })
   if (error) throw error
   return data as string
