@@ -4,10 +4,10 @@ import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
-  const tokenHash = requestUrl.searchParams.get('token_hash')
+  const code = requestUrl.searchParams.get('code')
   const type = requestUrl.searchParams.get('type') as EmailOtpType | null
 
-  if (!tokenHash || type !== 'email') {
+  if (!code) {
     return Response.redirect(new URL('/?auth_error=invalid_confirmation', request.url))
   }
 
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     },
   )
 
-  const { error } = await supabase.auth.verifyOtp({ type: 'email', token_hash: tokenHash })
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
   return Response.redirect(
     new URL(error ? '/?auth_error=confirmation_failed' : '/', request.url),
   )
