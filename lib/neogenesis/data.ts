@@ -191,16 +191,6 @@ export async function createCampaign(name: string, description: string, userId: 
     .single()
   if (error) throw error
 
-  const { error: invitationError } = await supabase.from('campaign_invitations').insert({
-    campaign_id: data.id,
-    code,
-    created_by: userId,
-  })
-  if (invitationError) {
-    await supabase.from('campaigns').delete().eq('id', data.id)
-    throw invitationError
-  }
-
   return data.id
 }
 
