@@ -4,7 +4,7 @@
 
 NeoGénesis será una aplicación mobile-first para apoyar partidas de Pokémon Tabletop United NeoGénesis (PTU NG). El producto debe separar cuentas, campañas/salas, membresías, personajes, Pokémon, inventario, historial y conocimiento de reglas.
 
-Este primer bosquejo implementa únicamente la capa de experiencia y un modelo de datos de demostración. La persistencia real multiusuario todavía no está conectada.
+La aplicación utiliza Supabase como fuente de verdad multiusuario. La UI mantiene una capa mobile-first, mientras Auth, PostgreSQL y RLS controlan identidad, salas y estado de campaña.
 
 ## Principios de dominio
 
@@ -100,6 +100,10 @@ El asistente tendrá tres fuentes principales de contexto:
 
 Preguntas sobre datos estructurados deben consultar primero la base de datos. Preguntas sobre reglas deben consultar el conocimiento de reglas. El LLM se utiliza para interpretar y presentar la respuesta, no como fuente de verdad.
 
+## Invitaciones
+
+Cada sala tiene un código persistente y un enlace equivalente (`/?invite=CODIGO`). Ambos métodos desembocan en la misma operación de unión. El código no concede acceso por sí mismo: el usuario debe autenticarse y la función de base de datos valida expiración, usos y pertenencia antes de insertar el miembro.
+
 ## UX inicial
 
 La navegación principal está diseñada para teléfono:
@@ -112,12 +116,24 @@ La navegación principal está diseñada para teléfono:
 
 Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista administrativa de jugadores. El prototipo incluye un selector de modo para visualizar esta experiencia sin crear todavía autenticación real.
 
+## Estado de implementación
+
+1. Autenticación por correo y contraseña mediante Supabase Auth.
+2. Selección real de salas/campañas mediante `campaign_members`.
+3. Creación de salas con código de invitación persistente.
+4. Unión mediante código o enlace `?invite=CODIGO`, usando una función transaccional protegida.
+5. Fichas, Pokémon, inventario y sesiones leídos desde PostgreSQL.
+6. RLS aplicado por pertenencia a campaña y rol GM/PLAYER.
+
 ## Próximas fases
 
-1. Autenticación y selección real de salas.
-
-2. PostgreSQL, RLS y migraciones.
-3. Campañas, invitaciones y miembros.
+1. Ficha completa y validadores PTU NG.
+2. Pokémon y Pokédex estructurada.
+3. Inventario con ledger de eventos y tienda por campaña.
+4. Sesiones, notas y herramientas de GM.
+5. Base de conocimiento de reglas.
+6. Asistente contextual con herramientas de lectura/escritura controladas.
+7. Pruebas de reglas y autorización.
 4. Ficha completa y validadores PTU NG.
 5. Pokémon y Pokédex estructurada.
 6. Inventario con ledger de eventos.
