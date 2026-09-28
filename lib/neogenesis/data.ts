@@ -234,6 +234,10 @@ export async function loadCampaignCreationRequests() {
   return (data ?? []) as CampaignCreationRequest[]
 }
 
+export async function loadAdminCampaignCreationRequests() {
+  return loadCampaignCreationRequests()
+}
+
 export async function loadAdminCampaigns(): Promise<Campaign[]> {
   const { data, error } = await supabase
     .from('campaigns')
