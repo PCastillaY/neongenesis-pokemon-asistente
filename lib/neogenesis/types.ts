@@ -1,4 +1,6 @@
-export type UserRole = 'PLAYER' | 'GM'
+export type UserRole = 'PLAYER' | 'GM' | 'PLATFORM_ADMIN'
+
+export type PlatformRole = 'USER' | 'PLATFORM_ADMIN'
 
 export type CampaignMemberRole = 'PLAYER' | 'GM'
 
@@ -89,6 +91,7 @@ export type Campaign = {
   progressionMode?: 'STANDARD' | 'ACCELERATED' | 'SLOW'
   inviteCode?: string
   imageUrl?: string
+  status?: 'PENDING' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'REJECTED'
   members: CampaignMember[]
   sessions: CampaignSession[]
   sessionNumber: number
