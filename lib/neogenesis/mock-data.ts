@@ -76,6 +76,16 @@ export const demoCampaign: Campaign = {
     { id: 'member-noah', displayName: 'Noah Kells', role: 'PLAYER' },
     { id: 'member-luna', displayName: 'Luna Sol', role: 'PLAYER' },
   ],
+  sessions: [
+    {
+      id: 'session-8',
+      sessionNumber: 8,
+      title: 'La señal del Santuario',
+      playedAt: 'Hoy',
+      summary: 'El equipo siguió una señal desconocida hasta las ruinas del santuario.',
+      notes: 'Investigar el símbolo de NeoGénesis y preparar la próxima expedición.',
+    },
+  ],
 }
 
 export { character }
