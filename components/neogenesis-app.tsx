@@ -23,6 +23,7 @@ import {
   UserRound,
 
   Users,
+  X,
   Zap,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
