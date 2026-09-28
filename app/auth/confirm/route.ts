@@ -1,11 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
-import type { EmailOtpType } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const type = requestUrl.searchParams.get('type') as EmailOtpType | null
 
   if (!code) {
     return Response.redirect(new URL('/?auth_error=invalid_confirmation', request.url))
