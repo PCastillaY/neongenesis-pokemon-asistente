@@ -1,64 +1,103 @@
 # NeoGénesis — Asistente PTU NG
 
-Aplicación **mobile-first** para acompañar partidas de Pokémon Tabletop United NeoGénesis (PTU NG): gestión de campañas, personajes, Pokémon, inventario, historial y un futuro asistente contextual de reglas.
+Aplicación **mobile-first** para acompañar partidas de Pokémon Tabletop United NeoGénesis (PTU NG): gestión de campañas, personajes, Pokémon, inventario, sesiones y un futuro asistente contextual de reglas.
 
 ## Estado actual
 
-Este repositorio contiene el **primer bosquejo funcional de interfaz y dominio**. Se puede desplegar en Vercel como una aplicación Next.js y probarse desde un teléfono o navegador.
+La aplicación ya utiliza **Supabase Auth + PostgreSQL + RLS** como fuente de verdad. No depende del estado de demostración ni de `localStorage` para conservar la partida.
 
-El prototipo incluye:
+Actualmente incluye:
 
-- Navegación mobile-first.
-- Ficha de Entrenador con Nivel, Vida, PA, Stats, Atributos y Clases.
-- Equipo de Pokémon con Nivel, PS, Tipos, Habilidad, Naturaleza y Movimientos.
-- Inventario y dinero.
-- Historial de eventos del personaje.
-- Vista de jugadores para el modo GM.
-- Cambio entre vista Jugador y modo DJ para explorar el flujo administrativo.
-- Persistencia local de los datos de demostración mediante `localStorage`.
-- Manifest e icono para una experiencia web móvil instalable.
-- Tipos de dominio separados de la interfaz para facilitar la futura conexión a PostgreSQL.
+- Autenticación por correo y contraseña.
+- Salas/campañas persistentes entre dispositivos.
+- Invitaciones por código y enlace.
+- Personajes, Pokémon capturados, inventario, sesiones y eventos persistentes.
+- Roles de campaña `GM` y `PLAYER`.
+- Rol global `PLATFORM_ADMIN` para administrar la plataforma.
+- Solicitudes de creación de campañas con aprobación administrativa.
+- Panel de administración para aprobar/rechazar solicitudes, crear, archivar, reactivar y eliminar salas.
+- RLS y funciones de base de datos para controlar las operaciones sensibles.
+- Base de datos preparada para catálogo global de Pokémon, objetos y reglas.
+- Flujo de invitación que conserva el código pendiente durante el inicio de sesión/registro.
 
-## Importante
-
-La persistencia actual es **solo de demostración y local al navegador**. Todavía no existe autenticación, base de datos, invitaciones reales, autorización de servidor ni sincronización entre dispositivos.
-
-No se ha intentado automatizar todavía la totalidad de las reglas de PTU NG. El modelo se prepara para soportarlas progresivamente sin convertir el LLM en la fuente de verdad.
-
-## Arquitectura prevista
+## Arquitectura de roles
 
 ```text
-Next.js App Router
-  ├── UI mobile-first
-  ├── Server Actions / Route Handlers
-  ├── autenticación + autorización por campaña
-  ├── PostgreSQL
-  │    ├── usuarios
-  │    ├── campañas / salas
-  │    ├── miembros
-  │    ├── personajes
-  │    ├── Pokémon capturados
-  │    ├── inventario
-  │    ├── eventos e historial
-  │    └── sesiones
-  ├── base de conocimiento PTU NG
-  └── asistente LLM contextual
+PLATFORM_ADMIN
+    │
+    ├── aprueba/rechaza solicitudes
+    ├── crea campañas directamente
+    ├── archiva/reactiva campañas
+    └── elimina campañas
+             │
+             ↓
+            GM
+             │
+             ├── administra su campaña
+             ├── gestiona jugadores
+             ├── sesiones
+             └── personaliza disponibilidad de contenido
+                     │
+                     ↓
+                   PLAYER
 ```
 
-La arquitectura detallada está en [`docs/architecture.md`](docs/architecture.md).
+El rol `PLATFORM_ADMIN` es global. `GM` y `PLAYER` son roles contextuales de cada campaña; una misma cuenta puede ser GM en una campaña y jugador en otra.
 
-## Reglas de diseño de dominio
+## Flujo de creación de campañas
 
-- Un usuario puede participar en varias campañas.
-- El rol es contextual a la campaña: el mismo usuario puede ser GM en una sala y PLAYER en otra.
-- Personaje, Pokémon capturado y especie Pokémon son entidades distintas.
-- Inventario y cambios relevantes deben evolucionar hacia un historial auditable.
-- La base de datos será la fuente de verdad.
-- El asistente consultará reglas y datos estructurados antes de responder.
+Un usuario normal no crea una sala activa directamente:
 
-## PTU NG considerado
+```text
+Usuario
+  ↓
+Solicitud de campaña
+  ↓
+PENDING
+  ↓
+Administrador
+  ├── APPROVED → campaña ACTIVE + solicitante como GM
+  └── REJECTED
+```
 
-El bosquejo se alinea con elementos descritos en PTU NG como Atributos, Rasgos, Talentos, Clases, Nivel/Stats, Habilidades, Movimientos y Capacidades. También contempla PA, Pokémon, dinero, objetos y progresiones de personaje.
+Se limita además a una solicitud pendiente por usuario para evitar saturación administrativa.
+
+## Invitaciones
+
+Cada campaña activa tiene un código de invitación y un enlace equivalente:
+
+`/?invite=CODIGO`
+
+El código no concede acceso por sí solo. El usuario debe autenticarse y la función de base de datos valida la invitación antes de crear la membresía como `PLAYER`.
+
+Si el usuario abre un enlace sin estar autenticado, el código queda pendiente en el navegador. Después de iniciar sesión o completar el registro, la aplicación retoma automáticamente la invitación.
+
+## Modelo de contenido
+
+Las reglas y el catálogo base serán globales y reutilizables. El DJ no tendrá que volver a cargar las reglas para cada campaña.
+
+La campaña podrá personalizar la disponibilidad:
+
+- habilitar o bloquear objetos;
+- modificar precios o disponibilidad;
+- añadir objetos propios;
+- restringir contenido para una campaña;
+- aplicar excepciones temporales durante una sesión.
+
+La intención es mantener una única fuente de reglas base y evitar duplicación de contenido.
+
+## Seguridad
+
+La autorización crítica se realiza en PostgreSQL mediante RLS y funciones protegidas. La interfaz no se considera una barrera de seguridad.
+
+Las funciones administrativas validan `platform_role = PLATFORM_ADMIN`. Los cambios de rol de plataforma y de estado administrativo de una campaña están protegidos contra escalamiento desde el cliente.
+
+La configuración de Supabase usa variables de entorno:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+Nunca se debe colocar una service-role key en el cliente ni en el repositorio.
 
 ## Desarrollo local
 
@@ -69,8 +108,14 @@ pnpm dev
 
 Después abre `http://localhost:3000`.
 
-## Despliegue
+La arquitectura detallada está en [docs/architecture.md](docs/architecture.md).
 
-El proyecto utiliza Next.js App Router y está preparado para desplegarse directamente en Vercel. No requiere variables de entorno para ejecutar el prototipo actual.
+## Próximas fases
 
-Cuando se incorpore autenticación, PostgreSQL o IA, las credenciales deberán configurarse como variables de entorno en Vercel y mantenerse fuera del repositorio.
+1. Completar la ficha PTU NG y sus validadores.
+2. Cargar la Pokédex y el catálogo base de objetos.
+3. Implementar tienda y disponibilidad de contenido por campaña/sesión.
+4. Completar herramientas de DJ y sesiones.
+5. Incorporar la base de conocimiento de reglas.
+6. Conectar el asistente contextual a datos estructurados y reglas.
+7. Añadir pruebas automatizadas de autorización y reglas.
