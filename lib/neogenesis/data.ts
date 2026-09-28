@@ -113,19 +113,24 @@ export async function loadCampaigns() {
   if (memberError) throw memberError
 
   const rows = (memberRows ?? []) as any[]
-  const campaigns: Campaign[] = rows.map((row) => {
+  const unique = new Map<string, Campaign>()
+  for (const row of rows) {
     const campaign = row.campaign as DbCampaign
-    return {
+    if (!campaign || unique.has(campaign.id)) continue
+    unique.set(campaign.id, {
       id: campaign.id,
       name: campaign.name,
       description: campaign.description,
+      progressionMode: campaign.progression_mode,
+      inviteCode: campaign.invite_code ?? undefined,
+      imageUrl: campaign.image_url ?? undefined,
       members: [],
       sessions: [],
       sessionNumber: 0,
-    }
-  })
+    })
+  }
 
-  return campaigns
+  return Array.from(unique.values())
 }
 
 export async function loadCampaign(campaignId: string, userId: string): Promise<Campaign> {
@@ -168,6 +173,9 @@ export async function loadCampaign(campaignId: string, userId: string): Promise<
     id: campaignRow.id,
     name: campaignRow.name,
     description: campaignRow.description,
+    progressionMode: campaignRow.progression_mode,
+    inviteCode: campaignRow.invite_code ?? undefined,
+    imageUrl: campaignRow.image_url ?? undefined,
     members,
     sessions,
     sessionNumber: sessions[0]?.sessionNumber ?? 0,
