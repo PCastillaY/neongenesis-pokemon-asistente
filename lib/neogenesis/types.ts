@@ -5,23 +5,10 @@ export type CampaignMemberRole = 'PLAYER' | 'GM'
 export type AttributeRank = 'Patético' | 'Inexperto' | 'Novato' | 'Adepto' | 'Experto' | 'Maestro' | 'Virtuoso'
 
 export type TrainerAttribute =
-  | 'Acrobacias'
-  | 'Atletismo'
-  | 'Astucia'
-  | 'Carisma'
-  | 'Combate'
-  | 'Concentración'
-  | 'Educación General'
-  | 'Educación Médica'
-  | 'Educación Oculta'
-  | 'Educación Pokémon'
-  | 'Educación Tecnológica'
-  | 'Intimidación'
-  | 'Intuición'
-  | 'Liderazgo'
-  | 'Percepción'
-  | 'Sigilo'
-  | 'Supervivencia'
+  | 'Acrobacias' | 'Atletismo' | 'Astucia' | 'Carisma' | 'Combate' | 'Concentración'
+  | 'Educación General' | 'Educación Médica' | 'Educación Oculta' | 'Educación Pokémon'
+  | 'Educación Tecnológica' | 'Intimidación' | 'Intuición' | 'Liderazgo' | 'Percepción'
+  | 'Sigilo' | 'Supervivencia'
 
 export type TrainerStats = {
   ps: number
@@ -43,6 +30,7 @@ export type Pokemon = {
   ability: string
   moves: string[]
   nature?: string
+  imageUrl?: string
 }
 
 export type InventoryItem = {
@@ -85,10 +73,20 @@ export type CampaignMember = {
   character?: Character
 }
 
+export type CampaignSession = {
+  id: string
+  sessionNumber: number
+  title: string
+  playedAt?: string
+  summary: string
+  notes: string
+}
+
 export type Campaign = {
   id: string
   name: string
   description: string
   members: CampaignMember[]
+  sessions: CampaignSession[]
   sessionNumber: number
 }
