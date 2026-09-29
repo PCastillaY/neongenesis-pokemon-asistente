@@ -128,7 +128,7 @@ El DJ y los jugadores conservan las decisiones narrativas y el flujo de la parti
 ## Próximas fases
 
 1. Completar la ficha PTU NG y sus validadores.
-2. Cargar la Pokédex, movimientos, habilidades, capacidades y catálogo base de objetos.
+2. Completar el catálogo base de objetos y revisar los movimientos/acciones que todavía requieran datos adicionales del documento.
 3. Definir 3–4 presets por especie donde sea útil y permitir presets específicos de campaña para el DJ.
 4. Validar y completar las fórmulas de combate contra el documento PTU NG antes de convertirlas en acciones persistentes.
 5. Completar el preparador de encuentros y persistir los participantes generados.
