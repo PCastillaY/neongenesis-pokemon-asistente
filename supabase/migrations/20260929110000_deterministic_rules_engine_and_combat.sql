@@ -1,4 +1,5 @@
--- Deterministic PTU NG support: presets and combat state.
+-- Deterministic PTU NG support: presets, Pokédex data and combat state.
+create unique index if not exists pokemon_species_name_uidx on public.pokemon_species(name);
 -- This migration mirrors the live schema introduced while the rules engine was being iterated.
 
 create table if not exists public.pokemon_presets (
