@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive,
   Backpack,
-  Bot,
   Check,
   Eye,
   EyeOff,
@@ -21,6 +20,7 @@ import {
   Share2,
   Shield,
   Sparkles,
+  Swords,
   Trash2,
   UserRound,
 
@@ -40,21 +40,23 @@ import {
   loadCampaign,
   loadCampaigns,
   loadCampaignCreationRequests,
+  loadPokemonSpecies,
   rejectCampaignCreationRequest,
   submitCampaignCreationRequest,
   updateCampaignStatus,
   searchPlatformUsers,
   setPlatformAdmin,
 } from '@/lib/neogenesis/data'
-import type { Campaign, CampaignMember, CampaignSession, Character, Pokemon } from '@/lib/neogenesis/types'
+import type { Campaign, CampaignMember, CampaignSession, Character, Pokemon, PokemonSpecies } from '@/lib/neogenesis/types'
 import type { CampaignCreationRequest } from '@/lib/neogenesis/data'
+import { DEFAULT_PRESETS, generatePokemonBuild } from '@/lib/neogenesis/rules-engine'
 
 const tabs = [
   { id: 'home', label: 'Inicio', icon: Home },
   { id: 'character', label: 'Ficha', icon: UserRound },
   { id: 'pokemon', label: 'Equipo', icon: Zap },
   { id: 'inventory', label: 'Objetos', icon: Backpack },
-  { id: 'assistant', label: 'IA', icon: Bot },
+  { id: 'encounters', label: 'Encuentros', icon: Swords },
 ] as const
 
 type TabId = (typeof tabs)[number]['id']
@@ -286,8 +288,55 @@ function SessionNotes({ sessions, onSelect }: { sessions: CampaignSession[]; onS
   return <section><SectionTitle icon={History}>Sesiones</SectionTitle>{sessions.length ? <div className="space-y-2">{sessions.map((session) => <button key={session.id} onClick={() => onSelect(session)} className="w-full rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-left transition hover:bg-white/[0.07]"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">Sesión {session.sessionNumber} · {session.title}</p><p className="mt-1 text-xs text-white/40">{session.playedAt ?? 'Sin fecha'}</p></div><ChevronRight className="size-4 text-white/25" /></div><p className="mt-3 text-xs leading-5 text-white/50">{session.summary || 'Sin resumen.'}</p></button>)}</div> : <p className="text-sm text-white/35">No hay sesiones registradas.</p>}</section>
 }
 
-function AssistantTab({ character }: { character?: Character }) {
-  return <div className="space-y-4"><section className="rounded-3xl border border-amber-300/15 bg-amber-300/5 p-5"><div className="flex items-center gap-3"><div className="rounded-2xl bg-amber-300/10 p-3"><Bot className="size-5 text-amber-200" /></div><div><p className="font-bold">Asistente NeoGénesis</p><p className="text-xs text-white/45">Contexto: {character?.name || 'sin personaje'} · {character?.pokemon.length || 0} Pokémon</p></div></div><p className="mt-5 text-sm leading-6 text-white/65">El estado estructurado ya proviene de Supabase. La capa de reglas y LLM se conectará sobre estas entidades, sin volver al estado de demostración.</p></section></div>
+function EncounterBuilder({ isGM }: { isGM: boolean }) {
+  const [species, setSpecies] = useState<PokemonSpecies[]>([])
+  const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState<PokemonSpecies | null>(null)
+  const [level, setLevel] = useState(10)
+  const [quantity, setQuantity] = useState(1)
+  const [presetId, setPresetId] = useState('balanced')
+  const [results, setResults] = useState<Array<{ name: string; build: ReturnType<typeof generatePokemonBuild> }>>([])
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const presets = DEFAULT_PRESETS
+
+  const search = useCallback(async () => {
+    setBusy(true); setMessage('')
+    try { setSpecies(await loadPokemonSpecies(query)) }
+    catch (e: any) { setMessage(e.message || 'No se pudo cargar la Pokédex.') }
+    finally { setBusy(false) }
+  }, [query])
+
+  useEffect(() => { search().catch(() => {}) }, [search])
+
+  function generate() {
+    if (!selected) { setMessage('Selecciona una especie.'); return }
+    const preset = presets.find((item) => item.id === presetId) ?? presets[0]
+    const generated = Array.from({ length: quantity }, (_, index) => ({
+      name: selected.name + ' #' + (index + 1),
+      build: generatePokemonBuild(selected.baseStats as any, level, preset, Date.now() + index),
+    }))
+    setResults(generated)
+    setMessage('')
+  }
+
+  if (!isGM) return <div className="rounded-3xl border border-dashed border-white/10 p-5 text-sm leading-6 text-white/40">El preparador de encuentros es una herramienta del DJ. Los jugadores participarán en los combates que el DJ active.</div>
+
+  return <div className="space-y-4">
+    <section className="rounded-3xl border border-amber-300/15 bg-amber-300/5 p-5">
+      <SectionTitle icon={Swords}>Preparar encuentro</SectionTitle>
+      <p className="text-sm leading-6 text-white/55">El motor genera variantes sin IA: especie, nivel, preset y aleatoriedad reproducible. El DJ conserva la decisión de qué Pokémon aparecen en la partida.</p>
+      <div className="mt-4 flex gap-2"><input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') search() }} placeholder="Buscar especie" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/15 px-3 py-2.5 text-sm outline-none" /><button onClick={search} disabled={busy} className="rounded-xl bg-amber-200 px-3 py-2 text-xs font-bold text-slate-950">Buscar</button></div>
+      <div className="mt-3 max-h-40 space-y-1 overflow-y-auto">{species.map((item) => <button key={item.id} onClick={() => setSelected(item)} className={'w-full rounded-xl px-3 py-2 text-left text-sm ' + (selected?.id === item.id ? 'bg-amber-300/15 text-amber-100' : 'bg-white/[0.035] text-white/65')}>{item.name}</button>)}{!busy && !species.length && <p className="px-2 py-3 text-xs text-white/35">No hay especies disponibles con ese criterio.</p>}</div>
+      {selected && <p className="mt-3 text-xs text-amber-200">Seleccionado: {selected.name}</p>}
+      <div className="mt-3 grid grid-cols-2 gap-2"><label className="rounded-xl bg-black/15 p-3 text-xs text-white/45">Nivel<input type="number" min={1} max={100} value={level} onChange={(e) => setLevel(Math.max(1, Math.min(100, Number(e.target.value))))} className="mt-1 w-full bg-transparent text-sm text-white outline-none" /></label><label className="rounded-xl bg-black/15 p-3 text-xs text-white/45">Cantidad<input type="number" min={1} max={20} value={quantity} onChange={(e) => setQuantity(Math.max(1, Math.min(20, Number(e.target.value))))} className="mt-1 w-full bg-transparent text-sm text-white outline-none" /></label></div>
+      <select value={presetId} onChange={(e) => setPresetId(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#080D1A] px-3 py-3 text-sm outline-none">{presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}</select>
+      <button onClick={generate} disabled={!selected} className="mt-3 w-full rounded-xl bg-amber-200 px-3 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">Generar variantes</button>
+      {message && <p className="mt-3 text-xs text-rose-200">{message}</p>}
+    </section>
+    {results.length > 0 && <section className="space-y-2"><SectionTitle icon={Zap}>Resultado del motor</SectionTitle>{results.map((result) => <article key={result.name} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"><div className="flex items-center justify-between"><div><p className="font-semibold">{result.name}</p><p className="text-xs text-white/40">Naturaleza: {result.build.natureName}</p></div><span className="rounded-full bg-amber-300/10 px-2 py-1 text-[10px] text-amber-200">Seed {result.build.seed}</span></div><div className="mt-3 grid grid-cols-3 gap-2 text-center">{Object.entries(result.build.finalStats).map(([stat, value]) => <div key={stat} className="rounded-xl bg-black/15 p-2"><p className="text-[9px] uppercase text-white/35">{stat === 'ps' ? 'PS' : stat}</p><p className="text-sm font-bold">{value}</p></div>)}</div><p className="mt-3 text-xs text-white/45">PS Máximos: <span className="font-bold text-white/75">{result.build.maxHp}</span></p></article>)}</section>}
+  </div>
 }
 
 function AdminUsersPanel({ onClose }: { onClose: () => void }) {
@@ -512,7 +561,7 @@ export default function NeoGenesisApp() {
         return character ? <CharacterTab character={character} /> : <CreateCharacterForm busy={loading} onCreate={handleCreateCharacter} />
       case 'pokemon': return character ? <PokemonTab character={character} /> : <EmptyCharacter />
       case 'inventory': return character ? <InventoryTab character={character} /> : <EmptyCharacter />
-      case 'assistant': return <AssistantTab character={character} />
+      case 'encounters': return <EncounterBuilder isGM={currentMember?.role === 'GM'} />
       default:
         return <div className="space-y-6"><HomeTab campaign={campaign} character={character} currentMember={currentMember} onSelectMember={setSelectedMember} />{currentMember?.role === 'GM' && <InviteCard campaign={campaign} />}<SessionNotes sessions={campaign.sessions} onSelect={setSelectedSession} /></div>
     }
