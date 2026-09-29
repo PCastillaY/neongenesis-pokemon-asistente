@@ -101,5 +101,61 @@ grant select, insert, update, delete on public.combat_participants to authentica
 grant select, insert, update, delete on public.combat_actions to authenticated;
 grant select, insert, update, delete on public.combat_rolls to authenticated;
 
--- Policies are defined in the live database during the iterative rollout.
--- Keep them in the canonical migration once the complete rules/RLS contract is finalized.
+create policy "pokemon_presets_read_authenticated" on public.pokemon_presets
+for select to authenticated
+using (campaign_id is null or (select private.is_campaign_member(campaign_id)));
+
+create policy "pokemon_presets_manage_gm" on public.pokemon_presets
+for all to authenticated
+using (
+  (campaign_id is not null and (select private.is_campaign_gm(campaign_id)))
+  or (campaign_id is null and (select private.is_platform_admin()))
+)
+with check (
+  (campaign_id is not null and (select private.is_campaign_gm(campaign_id)) and created_by = (select auth.uid()))
+  or (campaign_id is null and (select private.is_platform_admin()))
+);
+
+create policy "combat_encounters_member_read" on public.combat_encounters
+for select to authenticated using ((select private.is_campaign_member(campaign_id)));
+
+create policy "combat_encounters_gm_write" on public.combat_encounters
+for all to authenticated
+using ((select private.is_campaign_gm(campaign_id)))
+with check ((select private.is_campaign_gm(campaign_id)) and created_by = (select auth.uid()));
+
+create policy "combat_participants_member_read" on public.combat_participants
+for select to authenticated
+using (exists (select 1 from public.combat_encounters e where e.id = encounter_id and (select private.is_campaign_member(e.campaign_id))));
+
+create policy "combat_participants_gm_write" on public.combat_participants
+for all to authenticated
+using (exists (select 1 from public.combat_encounters e where e.id = encounter_id and (select private.is_campaign_gm(e.campaign_id))))
+with check (exists (select 1 from public.combat_encounters e where e.id = encounter_id and (select private.is_campaign_gm(e.campaign_id))));
+
+create policy "combat_actions_member_read" on public.combat_actions
+for select to authenticated
+using (exists (select 1 from public.combat_encounters e where e.id = encounter_id and (select private.is_campaign_member(e.campaign_id))));
+
+create policy "combat_actions_member_write" on public.combat_actions
+for insert to authenticated
+with check (
+  (select private.is_campaign_member((select e.campaign_id from public.combat_encounters e where e.id = encounter_id)))
+  and created_by = (select auth.uid())
+);
+
+create policy "combat_rolls_member_read" on public.combat_rolls
+for select to authenticated
+using (exists (
+  select 1 from public.combat_actions a
+  join public.combat_encounters e on e.id = a.encounter_id
+  where a.id = action_id and (select private.is_campaign_member(e.campaign_id))
+));
+
+create policy "combat_rolls_member_write" on public.combat_rolls
+for insert to authenticated
+with check (exists (
+  select 1 from public.combat_actions a
+  join public.combat_encounters e on e.id = a.encounter_id
+  where a.id = action_id and (select private.is_campaign_member(e.campaign_id))
+));
