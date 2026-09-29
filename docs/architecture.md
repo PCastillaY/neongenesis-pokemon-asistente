@@ -17,7 +17,7 @@ La aplicación utiliza Supabase como fuente de verdad multiusuario. La UI mantie
 - Un **Pokémon capturado** es una instancia individual de una especie, por lo que especie y Pokémon del jugador son conceptos diferentes.
 - El inventario debe evolucionar hacia un libro mayor de eventos para conservar el historial de adquisiciones, usos y modificaciones.
 - Los cambios administrativos importantes deben registrar quién los realizó, cuándo y por qué.
-- La base de datos será la fuente de verdad; el asistente no debe inventar el estado del personaje.
+- La base de datos y el motor de reglas son la fuente de verdad; la aplicación no debe delegar decisiones mecánicas en un modelo generativo.
 
 ## Reglas PTU NG consideradas en el prototipo
 
@@ -111,15 +111,62 @@ request
   -> transaction + audit event
 ```
 
-## Asistente
+## Motor de reglas y automatización
 
-El asistente tendrá tres fuentes principales de contexto:
+El producto no utiliza IA para resolver la partida. Las reglas mecánicas se implementan como funciones deterministas y datos estructurados derivados de PTU NG.
 
-1. **Reglas:** recuperación de fragmentos del manual/base de conocimiento.
-2. **Campaña:** sesión, eventos y decisiones del GM.
-3. **Personaje:** atributos, clases, rasgos, talentos, Pokémon, objetos y recursos actuales.
+El patrón general es:
 
-Preguntas sobre datos estructurados deben consultar primero la base de datos. Preguntas sobre reglas deben consultar el conocimiento de reglas. El LLM se utiliza para interpretar y presentar la respuesta, no como fuente de verdad.
+```
+acción del usuario/DJ
+      ↓
+validación
+      ↓
+motor de reglas
+      ↓
+cálculo
+      ↓
+modificación de estado
+      ↓
+evento persistente
+      ↓
+historial
+```
+
+La aleatoriedad permitida por el sistema utiliza un RNG con semilla para que las generaciones puedan auditarse y reproducirse.
+
+### Generación de Pokémon
+
+Una especie contiene sus datos base. Los presets contienen únicamente preferencias de generación, no sustituyen las reglas del manual:
+
+- pesos de distribución de Stats;
+- pesos de Naturaleza;
+- pesos de selección de Movimientos;
+- reglas de comportamiento opcionales para herramientas del DJ.
+
+La aplicación puede ofrecer 3–4 presets por especie cuando tenga sentido. El DJ puede seleccionar especie, nivel, cantidad y preset para preparar un encuentro. La Naturaleza se obtiene mediante selección ponderada y la variante conserva la semilla utilizada.
+
+Las Naturalezas se mantienen como datos del motor y aplican el +2/-2 indicado por PTU NG. El BSP se calcula según los tres Stats Base más altos y los incrementos por cada 10 Niveles.
+
+### Combate
+
+Los dados utilizados durante la partida son físicos. NeoGénesis no lanza los dados por el usuario. El jugador o DJ introduce el resultado de la tirada y el motor realiza los cálculos restantes.
+
+El flujo objetivo es:
+
+```
+Movimiento elegido
+→ indicación de dados a lanzar
+→ resultado físico introducido
+→ cálculo de Precisión/Daño
+→ modificadores y efectividad
+→ PS/estado actualizado
+→ evento de combate
+```
+
+Cada encuentro conserva participantes, acciones y tiradas para reconstruir lo ocurrido.
+
+Las decisiones narrativas, la selección final de enemigos, objetivos, posicionamiento y excepciones de la partida permanecen bajo control del DJ y los jugadores.
 
 ## Estados de campaña
 
@@ -137,7 +184,7 @@ La navegación principal está diseñada para teléfono:
 - Ficha
 - Equipo Pokémon
 - Objetos
-- Asistente
+- Encuentros
 
 Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista administrativa de jugadores. El prototipo incluye un selector de modo para visualizar esta experiencia sin crear todavía autenticación real.
 
@@ -157,8 +204,8 @@ Cuando el usuario tiene permisos de GM, la misma aplicación incorpora la vista 
 2. Pokémon y Pokédex estructurada.
 3. Inventario con ledger de eventos y tienda por campaña.
 4. Sesiones, notas y herramientas de GM.
-5. Base de conocimiento de reglas.
-6. Asistente contextual con herramientas de lectura/escritura controladas.
+5. Motor de reglas PTU NG y catálogo estructurado.
+6. Preparador y sala de combates.
 7. Pruebas de reglas y autorización.
 
 ## Persistencia mínima obligatoria
