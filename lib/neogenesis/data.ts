@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import type { Campaign, CampaignMember, CampaignSession, Character, HistoryEvent, InventoryItem, Pokemon } from '@/lib/neogenesis/types'
+import type { Campaign, CampaignMember, CampaignSession, Character, HistoryEvent, InventoryItem, Pokemon, PokemonSpecies, TrainerStats } from '@/lib/neogenesis/types'
 
 type DbCampaign = {
   id: string
@@ -79,7 +79,7 @@ function toCharacter(row: DbCharacter, pokemon: Pokemon[], inventory: InventoryI
 
 async function loadCharacterData(character: DbCharacter) {
   const [{ data: pokemonRows, error: pokemonError }, { data: inventoryRows, error: inventoryError }, { data: eventRows, error: eventError }] = await Promise.all([
-    supabase.from('captured_pokemon').select('id,nickname,level,hp,max_hp,types,ability,moves,nature,image_url,species:pokemon_species(name)').eq('character_id', character.id).order('created_at'),
+    supabase.from('captured_pokemon').select('id,nickname,level,hp,max_hp,types,ability,moves,nature,image_url,species_id,species:pokemon_species(name,base_stats)').eq('character_id', character.id).order('created_at'),
     supabase.from('character_inventory').select('id,quantity,custom_name,item:items(name,category)').eq('character_id', character.id).order('created_at'),
     supabase.from('campaign_events').select('id,event_type,title,detail,created_at,entity_type,entity_id').eq('campaign_id', character.campaign_id).order('created_at', { ascending: false }).limit(50),
   ])
@@ -100,6 +100,11 @@ async function loadCharacterData(character: DbCharacter) {
     moves: row.moves ?? [],
     nature: row.nature ?? undefined,
     imageUrl: row.image_url ?? undefined,
+    speciesId: row.species_id ?? undefined,
+    baseStats: row.species?.base_stats ? {
+      ps: Number(row.species.base_stats.ps ?? 0), ataque: Number(row.species.base_stats.ataque ?? 0), defensa: Number(row.species.base_stats.defensa ?? 0),
+      ataqueEspecial: Number(row.species.base_stats.ataqueEspecial ?? 0), defensaEspecial: Number(row.species.base_stats.defensaEspecial ?? 0), velocidad: Number(row.species.base_stats.velocidad ?? 0),
+    } : undefined,
   }))
 
   const inventory: InventoryItem[] = (inventoryRows ?? []).map((row: any) => ({
@@ -343,4 +348,35 @@ export async function joinCampaign(code: string) {
   })
   if (error) throw error
   return data as { campaign_id: string; campaign_name: string; role: 'PLAYER' | 'GM'; already_member: boolean }
+}
+
+
+export async function loadPokemonSpecies(query = ''): Promise<PokemonSpecies[]> {
+  let request = supabase
+    .from('pokemon_species')
+    .select('id,dex_number,name,types,base_stats,abilities,image_url')
+    .order('dex_number')
+    .limit(100)
+
+  if (query.trim()) request = request.ilike('name', '%' + query.trim() + '%')
+
+  const { data, error } = await request
+  if (error) throw error
+
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    dexNumber: row.dex_number ?? undefined,
+    name: row.name,
+    types: row.types ?? [],
+    baseStats: {
+      ps: Number(row.base_stats?.ps ?? 0),
+      ataque: Number(row.base_stats?.ataque ?? 0),
+      defensa: Number(row.base_stats?.defensa ?? 0),
+      ataqueEspecial: Number(row.base_stats?.ataqueEspecial ?? 0),
+      defensaEspecial: Number(row.base_stats?.defensaEspecial ?? 0),
+      velocidad: Number(row.base_stats?.velocidad ?? 0),
+    } satisfies TrainerStats,
+    abilities: row.abilities ?? [],
+    imageUrl: row.image_url ?? undefined,
+  }))
 }
