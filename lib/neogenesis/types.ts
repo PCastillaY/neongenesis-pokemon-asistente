@@ -29,8 +29,6 @@ export type PokemonSpecies = {
   baseStats: TrainerStats
   abilities: string[]
   imageUrl?: string
-  baseStats?: TrainerStats
-  speciesId?: string
 }
 
 export type Pokemon = {
@@ -45,6 +43,8 @@ export type Pokemon = {
   moves: string[]
   nature?: string
   imageUrl?: string
+  baseStats?: TrainerStats
+  speciesId?: string
 }
 
 export type InventoryItem = {
