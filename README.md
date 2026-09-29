@@ -1,6 +1,6 @@
 # NeoGénesis — Asistente PTU NG
 
-Aplicación **mobile-first** para acompañar partidas de Pokémon Tabletop United NeoGénesis (PTU NG): gestión de campañas, personajes, Pokémon, inventario, sesiones y un futuro asistente contextual de reglas.
+Aplicación **mobile-first** para acompañar partidas de Pokémon Tabletop United NeoGénesis (PTU NG): gestión de campañas, personajes, Pokémon, inventario, sesiones, preparación de encuentros y un motor determinista de reglas.
 
 ## Estado actual
 
@@ -18,6 +18,9 @@ Actualmente incluye:
 - Panel de administración para aprobar/rechazar solicitudes, crear, archivar, reactivar y eliminar salas.
 - RLS y funciones de base de datos para controlar las operaciones sensibles.
 - Base de datos preparada para catálogo global de Pokémon, objetos y reglas.
+- Motor determinista para generación de variantes Pokémon mediante presets, Naturalezas ponderadas y semillas reproducibles.
+- Preparador de encuentros para que el DJ seleccione especie, nivel, cantidad y perfil sin depender de IA.
+- Estructura persistente para encuentros, participantes, acciones y tiradas físicas.
 - Flujo de invitación que conserva el código pendiente durante el inicio de sesión/registro.
 
 ## Arquitectura de roles
@@ -115,12 +118,18 @@ Después abre `http://localhost:3000`.
 
 La arquitectura detallada está en [docs/architecture.md](docs/architecture.md).
 
+## Dirección del producto
+
+La aplicación no depende de un proveedor LLM ni utiliza IA para generar Pokémon, elegir estadísticas, determinar Naturalezas o resolver reglas. El motor de reglas es determinista y utiliza datos estructurados, presets y aleatoriedad reproducible.
+
+El DJ y los jugadores conservan las decisiones narrativas y el flujo de la partida. NeoGénesis automatiza únicamente el trabajo repetitivo y mecánico que pueda expresarse mediante reglas: preparación de encuentros, generación de variantes, cálculos de combate, actualización de PS y registro de acciones/tiradas.
+
 ## Próximas fases
 
 1. Completar la ficha PTU NG y sus validadores.
-2. Cargar la Pokédex y el catálogo base de objetos.
-3. Implementar tienda y disponibilidad de contenido por campaña/sesión.
-4. Completar herramientas de DJ y sesiones.
-5. Incorporar la base de conocimiento de reglas.
-6. Conectar el asistente contextual a datos estructurados y reglas.
+2. Cargar la Pokédex, movimientos, habilidades, capacidades y catálogo base de objetos.
+3. Definir 3–4 presets por especie donde sea útil y permitir presets específicos de campaña para el DJ.
+4. Completar el preparador de encuentros y persistir los participantes generados.
+5. Implementar el flujo de combate: tiradas físicas introducidas por los jugadores/DJ → cálculo automático → modificación de estado → evento → historial.
+6. Implementar tienda y disponibilidad de contenido por campaña/sesión.
 7. Añadir pruebas automatizadas de autorización y reglas.
