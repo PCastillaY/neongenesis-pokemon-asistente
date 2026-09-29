@@ -178,3 +178,12 @@ export function generatePokemonBuild(
     seed,
   }
 }
+
+
+export const DEFAULT_PRESETS: PokemonPreset[] = [
+  { id: 'balanced', name: 'Equilibrado', description: 'Distribución uniforme para encuentros generales.', statWeights: { ps: 1, ataque: 1, defensa: 1, ataqueEspecial: 1, defensaEspecial: 1, velocidad: 1 }, natureWeights: {} },
+  { id: 'fast', name: 'Rápido', description: 'Prioriza Velocidad y un perfil ofensivo.', statWeights: { ps: 0.5, ataque: 1.4, defensa: 0.5, ataqueEspecial: 1.2, defensaEspecial: 0.5, velocidad: 2 }, natureWeights: { Alegre: 4, Audaz: 2, Miedosa: 2, Activa: 1 } },
+  { id: 'physical', name: 'Ofensivo físico', description: 'Prioriza Ataque y Velocidad.', statWeights: { ps: 0.7, ataque: 2, defensa: 0.8, ataqueEspecial: 0.4, defensaEspecial: 0.6, velocidad: 1.5 }, natureWeights: { Firme: 4, Audaz: 2, Alegre: 2, Pícara: 1 } },
+  { id: 'special', name: 'Ofensivo especial', description: 'Prioriza Ataque Especial y Velocidad.', statWeights: { ps: 0.7, ataque: 0.4, defensa: 0.7, ataqueEspecial: 2, defensaEspecial: 0.8, velocidad: 1.5 }, natureWeights: { Modesta: 4, Miedosa: 3, Afable: 1, Alegre: 1 } },
+  { id: 'tank', name: 'Resistente', description: 'Prioriza PS y Stats Defensivos.', statWeights: { ps: 2, ataque: 0.7, defensa: 1.7, ataqueEspecial: 0.6, defensaEspecial: 1.7, velocidad: 0.4 }, natureWeights: { Osada: 3, Amable: 3, Serena: 2, Rígida: 1 } },
+]
