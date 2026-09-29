@@ -144,9 +144,11 @@ export function calculatePrincipalBonus(baseStats: PokemonBaseStats, level: numb
   return result
 }
 
-export function calculatePokemonMaxHp(stats: PokemonBaseStats, mode: 'ACTUAL' | 'OLD' = 'ACTUAL'): number {
-  if (mode === 'OLD') return stats.ps * 3 + 10
-  return stats.ps * 3 + stats.defensa + stats.defensaEspecial + 10
+export function calculatePokemonMaxHp(stats: PokemonBaseStats, level: number, mode: 'ACTUAL' | 'OLD' = 'ACTUAL'): number {
+  // PTU NG 1.2.3: Pokémon HP = (PS × 3) + Nivel + 10.
+  // The OLD mode is retained only as an explicit compatibility hook.
+  if (mode === 'OLD') return stats.ps * 3 + level + 10
+  return stats.ps * 3 + level + 10
 }
 
 export function generatePokemonBuild(
@@ -173,7 +175,7 @@ export function generatePokemonBuild(
     investedStats,
     principalBonus,
     finalStats,
-    maxHp: calculatePokemonMaxHp(finalStats, hpFormula),
+    maxHp: calculatePokemonMaxHp(finalStats, level, hpFormula),
     natureName: nature.name,
     seed,
   }
