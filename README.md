@@ -18,6 +18,7 @@ Actualmente incluye:
 - Panel de administración para aprobar/rechazar solicitudes, crear, archivar, reactivar y eliminar salas.
 - RLS y funciones de base de datos para controlar las operaciones sensibles.
 - Base de datos preparada para catálogo global de Pokémon, objetos y reglas.
+- Catálogo PTU NeoGénesis cargado en Supabase: 978 entradas de Pokémon/formas con Stats Base, tipos, habilidades, capacidades, evoluciones, movimientos por nivel y movimientos de tutor.
 - Motor determinista para generación de variantes Pokémon mediante presets, Naturalezas ponderadas y semillas reproducibles.
 - Preparador de encuentros para que el DJ seleccione especie, nivel, cantidad y perfil sin depender de IA.
 - Estructura persistente para encuentros, participantes, acciones y tiradas físicas.
@@ -129,7 +130,8 @@ El DJ y los jugadores conservan las decisiones narrativas y el flujo de la parti
 1. Completar la ficha PTU NG y sus validadores.
 2. Cargar la Pokédex, movimientos, habilidades, capacidades y catálogo base de objetos.
 3. Definir 3–4 presets por especie donde sea útil y permitir presets específicos de campaña para el DJ.
-4. Completar el preparador de encuentros y persistir los participantes generados.
-5. Implementar el flujo de combate: tiradas físicas introducidas por los jugadores/DJ → cálculo automático → modificación de estado → evento → historial.
-6. Implementar tienda y disponibilidad de contenido por campaña/sesión.
-7. Añadir pruebas automatizadas de autorización y reglas.
+4. Validar y completar las fórmulas de combate contra el documento PTU NG antes de convertirlas en acciones persistentes.
+5. Completar el preparador de encuentros y persistir los participantes generados.
+6. Implementar el flujo de combate: tiradas físicas introducidas por los jugadores/DJ → cálculo automático → modificación de estado → evento → historial.
+7. Implementar tienda y disponibilidad de contenido por campaña/sesión.
+8. Añadir pruebas automatizadas de autorización y reglas.
