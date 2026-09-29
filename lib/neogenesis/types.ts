@@ -21,6 +21,18 @@ export type TrainerStats = {
   velocidad: number
 }
 
+export type PokemonSpecies = {
+  id: string
+  dexNumber?: number
+  name: string
+  types: string[]
+  baseStats: TrainerStats
+  abilities: string[]
+  imageUrl?: string
+  baseStats?: TrainerStats
+  speciesId?: string
+}
+
 export type Pokemon = {
   id: string
   name: string
