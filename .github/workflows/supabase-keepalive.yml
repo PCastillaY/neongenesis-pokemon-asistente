@@ -1,0 +1,43 @@
+name: Supabase Free-tier keepalive
+
+on:
+  schedule:
+    # Four small Postgres requests per day; avoid the top of the hour.
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Execute a lightweight Postgres-backed RPC
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Add the SUPABASE_ANON_KEY repository secret before running this workflow."
+            exit 1
+          fi
+
+          response="$(curl --fail --silent --show-error \
+            --max-time 20 \
+            "https://kodypakhrxwdbxffxtxt.supabase.co/rest/v1/rpc/keepalive_ping" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            --data '{}')"
+
+          if [ "$response" != "true" ]; then
+            echo "::error::Unexpected response from Supabase: $response"
+            exit 1
+          fi
+
+          echo "Supabase keepalive succeeded at $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
