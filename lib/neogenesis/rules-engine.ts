@@ -18,6 +18,8 @@ export type PokemonPreset = {
   behaviorRules?: string[]
 }
 
+export type HpFormula = 'ACTUAL' | 'OLD'
+
 export type GeneratedPokemon = {
   nature: Nature
   baseStats: PokemonBaseStats
@@ -103,22 +105,22 @@ function allocateLevelPoints(level: number, weights: Partial<Record<PokemonStat,
   const invested = emptyStats()
   const points = Math.max(0, level - 1)
   const maxPerStat = Math.floor(points * 0.4)
-  const configured = statOrder.map((stat) => weights[stat] ?? DEFAULT_WEIGHTS[stat])
 
   for (let point = 0; point < points; point += 1) {
-    const available = statOrder.filter((stat) => invested[stat] < maxPerStat || maxPerStat === 0)
+    const available = statOrder.filter((stat) => maxPerStat === 0 || invested[stat] < maxPerStat)
     const candidates = available.length ? available : statOrder
-    const candidateWeights = candidates.map((stat) => weights[stat] ?? 1)
+    const candidateWeights = candidates.map((stat) => weights[stat] ?? DEFAULT_WEIGHTS[stat])
     const chosen = weightedPick(candidates, candidateWeights, random)
-    if (maxPerStat > 0 && invested[chosen] >= maxPerStat) continue
-    invested[chosen] += 1
+
+    // At very low levels the 40% cap rounds down to zero; the rule cannot
+    // prohibit every point, so distribute those early points across stats.
+    if (maxPerStat === 0) {
+      invested[chosen] += 1
+      continue
+    }
+    if (invested[chosen] < maxPerStat) invested[chosen] += 1
   }
 
-  if (points > 0 && maxPerStat === 0) {
-    for (let i = 0; i < points; i += 1) invested[statOrder[i % statOrder.length]] += 1
-  }
-
-  void configured
   return invested
 }
 
@@ -144,11 +146,16 @@ export function calculatePrincipalBonus(baseStats: PokemonBaseStats, level: numb
   return result
 }
 
-export function calculatePokemonMaxHp(stats: PokemonBaseStats, level: number, mode: 'ACTUAL' | 'OLD' = 'ACTUAL'): number {
-  // PTU NG 1.2.3: Pokémon HP = (PS × 3) + Nivel + 10.
-  // The OLD mode is retained only as an explicit compatibility hook.
+/**
+ * PTU NeoGénesis Core 1.2.3 offers two selectable Pokémon max-HP formulas.
+ * ACTUAL: (PS × 3) + Defensa + Defensa Especial + 10.
+ * OLD:    (PS × 3) + Nivel del Pokémon + 10.
+ * The GM selects the formula for the campaign.
+ */
+export function calculatePokemonMaxHp(stats: PokemonBaseStats, level: number, mode: HpFormula = 'ACTUAL'): number {
+  if (!Number.isFinite(level) || level < 1) throw new RangeError('El nivel del Pokémon debe ser un número mayor o igual a 1.')
   if (mode === 'OLD') return stats.ps * 3 + level + 10
-  return stats.ps * 3 + level + 10
+  return stats.ps * 3 + stats.defensa + stats.defensaEspecial + 10
 }
 
 export function generatePokemonBuild(
@@ -156,7 +163,7 @@ export function generatePokemonBuild(
   level: number,
   preset: PokemonPreset,
   seed = Date.now(),
-  hpFormula: 'ACTUAL' | 'OLD' = 'ACTUAL',
+  hpFormula: HpFormula = 'ACTUAL',
 ): GeneratedPokemon {
   const random = mulberry32(seed)
   const naturePool = NATURES
