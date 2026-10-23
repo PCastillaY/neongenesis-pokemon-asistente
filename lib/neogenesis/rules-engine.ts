@@ -106,19 +106,21 @@ function allocateLevelPoints(level: number, weights: Partial<Record<PokemonStat,
   const points = Math.max(0, level - 1)
   const maxPerStat = Math.floor(points * 0.4)
 
-  for (let point = 0; point < points; point += 1) {
-    const available = statOrder.filter((stat) => maxPerStat === 0 || invested[stat] < maxPerStat)
-    const candidates = available.length ? available : statOrder
-    const candidateWeights = candidates.map((stat) => weights[stat] ?? DEFAULT_WEIGHTS[stat])
-    const chosen = weightedPick(candidates, candidateWeights, random)
-
-    // At very low levels the 40% cap rounds down to zero; the rule cannot
-    // prohibit every point, so distribute those early points across stats.
-    if (maxPerStat === 0) {
-      invested[chosen] += 1
-      continue
+  // At very low levels floor(points × 40%) is zero. Spread these few points
+  // across different stats rather than accidentally assigning none or breaking
+  // the cap by repeatedly choosing the same stat.
+  if (points > 0 && maxPerStat === 0) {
+    for (let point = 0; point < points; point += 1) {
+      invested[statOrder[point % statOrder.length]] += 1
     }
-    if (invested[chosen] < maxPerStat) invested[chosen] += 1
+    return invested
+  }
+
+  for (let point = 0; point < points; point += 1) {
+    const available = statOrder.filter((stat) => invested[stat] < maxPerStat)
+    const candidateWeights = available.map((stat) => weights[stat] ?? DEFAULT_WEIGHTS[stat])
+    const chosen = weightedPick(available, candidateWeights, random)
+    invested[chosen] += 1
   }
 
   return invested
