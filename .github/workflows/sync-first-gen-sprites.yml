@@ -1,0 +1,37 @@
+name: Sync first-generation Pokémon sprites
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/sync-first-gen-sprites.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the sprite-assets branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download Pokémon #001–151 and item icons
+        run: node scripts/sync-pokeapi-sprites.mjs --max-id=151
+      - name: Commit downloaded assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit."
+          else
+            git commit -m "assets: add first-generation Pokémon sprites"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
