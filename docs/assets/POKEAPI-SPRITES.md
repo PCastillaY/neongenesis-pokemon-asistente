@@ -13,7 +13,6 @@ Run `node scripts/sync-pokeapi-sprites.mjs` from the project root. The script us
 
 ```text
 public/assets/
-├── POKEAPI-SPRITES-LICENCE.txt
 ├── pokemon/
 │   ├── artwork/       # larger artwork, named by Pokédex ID
 │   │   └── 25.png
@@ -29,7 +28,7 @@ Example paths usable by the app:
 - `/assets/pokemon/sprites/25.png`
 - `/assets/items/poke-ball.png`
 
-The default sync checks Pokédex IDs 1–151, skips files that do not exist, and downloads item images. To sync only Pokémon images, use `node scripts/sync-pokeapi-sprites.mjs --skip-items`. To limit the range, use `node scripts/sync-pokeapi-sprites.mjs --max-id=25`.
+The default sync checks Pokédex IDs 1–151, skips files that do not exist, and downloads item images. The upstream licence text is saved under `docs/assets/POKEAPI-SPRITES-LICENCE.txt`, in GitHub documentation rather than the app’s public asset directory. To sync only Pokémon images, use `node scripts/sync-pokeapi-sprites.mjs --skip-items`. To limit the range, use `node scripts/sync-pokeapi-sprites.mjs --max-id=25`.
 
 ## How to use the assets
 
