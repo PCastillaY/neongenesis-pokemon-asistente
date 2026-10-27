@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * Sync a curated, app-friendly subset of PokeAPI/sprites into public/assets.
+ * Sync app-friendly PokeAPI sprites into public/assets.
  *
  * Usage:
  *   node scripts/sync-pokeapi-sprites.mjs
- *   node scripts/sync-pokeapi-sprites.mjs --max-id=1025
+ *   node scripts/sync-pokeapi-sprites.mjs --max-id=151
  *   node scripts/sync-pokeapi-sprites.mjs --skip-items
  *
- * No third-party npm dependencies are required. This is an explicit local task,
- * not a build/postinstall hook: avoid downloading thousands of images on every
- * deployment.
+ * Uses Node's built-in fetch; no third-party dependencies are required.
+ * This is an explicit local task, not a build/postinstall hook.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -36,8 +35,7 @@ async function download(url, destination) {
       const response = await fetch(url, { headers });
       if (response.status === 404) return false;
       if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      await writeFile(destination, bytes);
+      await writeFile(destination, new Uint8Array(await response.arrayBuffer()));
       return true;
     } catch (error) {
       if (attempt === 3) {
@@ -70,7 +68,7 @@ async function syncItems() {
   if (!response.ok) throw new Error(`Could not list item sprites: HTTP ${response.status}`);
   const entries = await response.json();
   const jobs = entries
-    .filter((entry) => entry.type === "file" && /\\.png$/i.test(entry.name))
+    .filter((entry) => entry.type === "file" && /\.png$/i.test(entry.name))
     .map((entry) => ({
       url: entry.download_url,
       path: `public/assets/items/${entry.name}`,
@@ -86,17 +84,17 @@ async function runPool(jobs, concurrency) {
     while (true) {
       const index = next++;
       if (index >= jobs.length) return;
-      const job = jobs[index];
-      const ok = await download(job.url, path.join(ROOT, job.path));
-      if (ok) downloaded += 1;
+      if (await download(jobs[index].url, path.join(ROOT, jobs[index].path))) {
+        downloaded += 1;
+      }
       completed += 1;
       if (completed % 100 === 0 || completed === jobs.length) {
-        process.stdout.write(`\\rProcessed ${completed}/${jobs.length} (downloaded ${downloaded})`);
+        process.stdout.write(`\rProcessed ${completed}/${jobs.length} (downloaded ${downloaded})`);
       }
     }
   });
   await Promise.all(workers);
-  if (jobs.length) process.stdout.write("\\n");
+  if (jobs.length) process.stdout.write("\n");
   return { requested: jobs.length, downloaded };
 }
 
@@ -109,8 +107,7 @@ async function main() {
     items = await syncItems();
   }
 
-  const licenseUrl = `${BASE}/../LICENCE.txt`;
-  const licenseResponse = await fetch("https://raw.githubusercontent.com/PokeAPI/sprites/master/LICENCE.txt", { headers });
+  const licenseResponse = await fetch(`${BASE}/LICENCE.txt`, { headers });
   if (licenseResponse.ok) {
     const licensePath = path.join(ROOT, "public/assets/POKEAPI-SPRITES-LICENCE.txt");
     await mkdir(path.dirname(licensePath), { recursive: true });
@@ -119,11 +116,11 @@ async function main() {
     console.warn(`WARN: could not fetch upstream license (${licenseResponse.status})`);
   }
 
-  console.log("\\nSync summary:");
+  console.log("\nSync summary:");
   console.log(`  Pokémon assets: ${pokemon.downloaded}/${pokemon.requested} downloaded`);
   console.log(`  Item assets:    ${items.downloaded}/${items.requested} downloaded`);
   console.log("  Destination:    public/assets/");
-  console.log("Note: assets are downloaded locally; review the resulting file count and repository size before committing them.");
+  console.log("Review asset count and repository size before committing the downloaded files.");
 }
 
 main().catch((error) => {
