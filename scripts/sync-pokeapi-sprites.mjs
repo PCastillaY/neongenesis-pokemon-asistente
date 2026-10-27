@@ -109,7 +109,7 @@ async function main() {
 
   const licenseResponse = await fetch(`${BASE}/LICENCE.txt`, { headers });
   if (licenseResponse.ok) {
-    const licensePath = path.join(ROOT, "public/assets/POKEAPI-SPRITES-LICENCE.txt");
+    const licensePath = path.join(ROOT, "docs/assets/POKEAPI-SPRITES-LICENCE.txt");
     await mkdir(path.dirname(licensePath), { recursive: true });
     await writeFile(licensePath, await licenseResponse.text(), "utf8");
   } else {
