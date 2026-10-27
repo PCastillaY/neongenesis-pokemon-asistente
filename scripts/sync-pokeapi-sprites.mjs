@@ -18,7 +18,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master";
 const API = "https://api.github.com/repos/PokeAPI/sprites/contents";
 const maxArg = process.argv.find((arg) => arg.startsWith("--max-id="));
-const maxId = maxArg ? Number(maxArg.split("=")[1]) : 1025;
+const maxId = maxArg ? Number(maxArg.split("=")[1]) : 151;
 const skipItems = process.argv.includes("--skip-items");
 
 if (!Number.isInteger(maxId) || maxId < 1 || maxId > 20000) {
