@@ -11,19 +11,19 @@ Run `node scripts/sync-pokeapi-sprites.mjs` from the project root. The script us
 public/assets/
 ├── POKEAPI-SPRITES-LICENCE.txt
 ├── pokemon/
-│   ├── artwork/       # larger official-artwork images, named by Pokédex ID
+│   ├── artwork/       # larger artwork, named by Pokédex ID
 │   │   └── 25.png
 │   └── sprites/       # compact default sprites, named by Pokédex ID
 │       └── 25.png
 └── items/             # item images, retaining upstream filenames
-    └── pokeball.png
+    └── poke-ball.png
 ```
 
 Example paths usable by the app:
 
 - `/assets/pokemon/artwork/25.png`
 - `/assets/pokemon/sprites/25.png`
-- `/assets/items/pokeball.png` (exact item filename depends on upstream)
+- `/assets/items/poke-ball.png`
 
 The default sync checks Pokédex IDs 1–1025, skips files that do not exist, and downloads item images. To sync only Pokémon images, use `node scripts/sync-pokeapi-sprites.mjs --skip-items`. To limit the range, use `node scripts/sync-pokeapi-sprites.mjs --max-id=151`.
 
@@ -39,4 +39,4 @@ The default sync checks Pokédex IDs 1–1025, skips files that do not exist, an
 
 The sync script is deliberately **not** wired into `npm run build` or `postinstall`: downloading thousands of images during every Vercel build would be slow and unpredictable. Run it explicitly, inspect the output, and decide whether to commit the generated assets or store them elsewhere before deploying.
 
-The upstream licence file states CC0 for the repository, while also noting Pokémon Company copyright for image contents. Keep the licence file with the assets and review the applicable rights before using or redistributing them publicly, especially in a commercial context.
+The upstream licence file states CC0 for the repository, while also noting Pokémon Company copyright for image contents. Keep the licence file with the assets and review applicable rights before using or redistributing them publicly, especially in a commercial context.
